@@ -13,28 +13,38 @@
     .tab:hover { border-bottom-color: #888; }
     .card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: all 0.2s; }
     .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-    input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+    input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; background: white; }
     input:focus, textarea:focus { border-color: #111; }
-    .btn { padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s; border: 1px solid #111; }
+    .btn { padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s; border: 1px solid #111; display: inline-flex; align-items: center; gap: 6px; }
     .btn-primary { background: #111; color: white; border: none; }
     .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-secondary { background: transparent; }
     .btn-secondary:hover { background: #111; color: white; }
-    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #111; color: white; padding: 12px 28px; border-radius: 30px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; }
+    .btn-danger { background: transparent; color: #e74c3c; border-color: #e74c3c; }
+    .btn-danger:hover { background: #e74c3c; color: white; }
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #111; color: white; padding: 12px 28px; border-radius: 30px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
     .toast.show { opacity: 1; }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 9998; display: none; align-items: center; justify-content: center; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 9998; display: none; align-items: center; justify-content: center; padding: 20px; }
     .modal-overlay.active { display: flex; }
-    .modal-content { background: white; border-radius: 16px; padding: 32px; max-width: 560px; width: 90%; max-height: 80vh; overflow-y: auto; }
-    .tag { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; background: #eee; }
+    .modal-content { background: white; border-radius: 16px; padding: 32px; max-width: 640px; width: 100%; max-height: 85vh; overflow-y: auto; }
     .empty-state { text-align: center; padding: 60px 20px; color: #888; }
+    .upload-area { border: 2px dashed #ddd; border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .upload-area:hover { border-color: #111; background: #fafafa; }
+    .upload-area.dragover { border-color: #111; background: #f0f0f0; }
+    .upload-area.has-image { padding: 8px; border-style: solid; border-color: #ddd; }
+    .upload-area img { max-height: 160px; border-radius: 8px; }
+    .progress-bar { height: 4px; background: #eee; border-radius: 2px; overflow: hidden; margin-top: 8px; display: none; }
+    .progress-bar.active { display: block; }
+    .progress-bar-fill { height: 100%; background: #111; width: 0%; transition: width 0.3s; border-radius: 2px; }
+    .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain; }
   </style>
 </head>
 <body>
 
-<!-- Toast -->
 <div id="toast" class="toast"></div>
 
-<!-- Login Screen -->
+<!-- Login -->
 <div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
   <div class="max-w-sm w-full">
     <div class="text-center mb-10">
@@ -44,17 +54,15 @@
     </div>
     <div class="bg-white rounded-2xl p-8 border border-[#E5E2D9]">
       <label class="block text-xs tracking-widest text-[#888] mb-2">GitHub 个人访问令牌</label>
-      <input id="token-input" type="password" class="mb-4" placeholder="ghp_xxxxxxxxxxxx">
-      <p class="text-xs text-[#888] mb-5">需要 <code class="bg-zinc-100 px-1 rounded">repo</code> 权限。<br>
-      创建：<a href="https://github.com/settings/tokens" target="_blank" class="underline">github.com/settings/tokens</a></p>
-      <button onclick="login()" class="btn btn-primary w-full">登录</button>
+      <input id="token-input" type="password" class="mb-4" placeholder="ghp_...">
+      <p class="text-xs text-[#888] mb-5">需要 <code class="bg-zinc-100 px-1 rounded">repo</code> 权限。<br>创建：<a href="https://github.com/settings/tokens" target="_blank" class="underline">github.com/settings/tokens</a></p>
+      <button onclick="login()" class="btn btn-primary w-full justify-center">登录</button>
     </div>
   </div>
 </div>
 
 <!-- Main App -->
 <div id="app" style="display:none;">
-  <!-- Header -->
   <div class="border-b border-[#E5E2D9] bg-white/80 backdrop-blur-md sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
       <div class="font-medium tracking-tight">ZWS Studio · 管理后台</div>
@@ -65,7 +73,6 @@
     </div>
   </div>
 
-  <!-- Tabs -->
   <div class="border-b border-[#E5E2D9]">
     <div class="max-w-6xl mx-auto px-6 flex gap-8 text-sm">
       <div class="tab active" onclick="switchTab('photos', this)">📷 照片</div>
@@ -74,13 +81,9 @@
     </div>
   </div>
 
-  <!-- Content -->
   <div class="max-w-6xl mx-auto px-6 py-8">
-    <!-- Photos Tab -->
     <div id="tab-photos" class="tab-content"></div>
-    <!-- Videos Tab -->
     <div id="tab-videos" class="tab-content" style="display:none;"></div>
-    <!-- Posts Tab -->
     <div id="tab-posts" class="tab-content" style="display:none;"></div>
   </div>
 </div>
@@ -89,25 +92,26 @@
 // ─── Config ────────────────────────────────────────
 const REPO = 'zws875-star/studio';
 const BRANCH = 'main';
-const OWNER = 'zws875-star';
 const GITHUB_API = 'https://api.github.com';
+const SITE_URL = 'https://studio.zws875.com';
 
 let token = '';
 let currentTab = 'photos';
 
 // ─── Toast ─────────────────────────────────────────
-function toast(msg) {
+function toast(msg, isError) {
   const el = document.getElementById('toast');
   el.textContent = msg;
+  el.style.background = isError ? '#c0392b' : '#111';
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+  setTimeout(() => el.classList.remove('show'), 3000);
 }
 
 // ─── Login ─────────────────────────────────────────
 function login() {
   token = document.getElementById('token-input').value.trim();
   if (!token || !token.startsWith('gh')) {
-    toast('请输入有效的 GitHub Token');
+    toast('请输入有效的 GitHub Token（以 ghp_ 或 gho_ 开头）', true);
     return;
   }
   localStorage.setItem('zws-cms-token', token);
@@ -122,7 +126,6 @@ function logout() {
   location.reload();
 }
 
-// Auto login
 const savedToken = localStorage.getItem('zws-cms-token');
 if (savedToken) {
   token = savedToken;
@@ -153,25 +156,53 @@ async function gh(method, path, body) {
   };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(`${GITHUB_API}${path}`, opts);
-  if (!res.ok) throw new Error(`GitHub API: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
   return res.status === 204 ? null : await res.json();
 }
 
 async function getFile(path) {
   const data = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
-  return {
-    sha: data.sha,
-    content: JSON.parse(atob(data.content)),
-  };
+  return { sha: data.sha, content: JSON.parse(atob(data.content)) };
 }
 
 async function saveFile(path, content, sha, message) {
   return gh('PUT', `/repos/${REPO}/contents/${path}`, {
     message: message || `Update ${path}`,
     content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
-    sha,
+    sha, branch: BRANCH,
+  });
+}
+
+// ─── File Upload to GitHub ──────────────────────────
+
+async function uploadFile(localFile, repoPath) {
+  // Read file as base64
+  const b64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(localFile);
+  });
+
+  // Check if file already exists (get sha)
+  let existingSha = null;
+  try {
+    const existing = await gh('GET', `/repos/${REPO}/contents/${repoPath}?ref=${BRANCH}`);
+    existingSha = existing.sha;
+  } catch(e) { /* new file, that's fine */ }
+
+  // Upload via GitHub API
+  await gh('PUT', `/repos/${REPO}/contents/${repoPath}`, {
+    message: `Upload ${localFile.name}`,
+    content: b64,
+    sha: existingSha || undefined,
     branch: BRANCH,
   });
+
+  return `${SITE_URL}/${repoPath}`;
 }
 
 // ─── Data Loading ─────────────────────────────────
@@ -194,12 +225,12 @@ async function loadData(type) {
   }
 }
 
-// ─── Render Functions ─────────────────────────────
+// ─── Render ───────────────────────────────────────
 function renderList(type, data) {
   const container = document.getElementById(`tab-${type}`);
-  const labels = { photos: { title: '照片', add: '添加照片', fields: ['标题','图片','日期'] },
-                   videos: { title: '视频', add: '添加视频', fields: ['标题','描述','链接','类型','日期'] },
-                   posts: { title: '博客', add: '写新文章', fields: ['标题','日期','摘要','正文'] } };
+  const labels = { photos: { title: '照片', add: '添加照片' },
+                   videos: { title: '视频', add: '添加视频' },
+                   posts: { title: '博客', add: '写新文章' } };
   const l = labels[type];
 
   let html = `
@@ -213,9 +244,8 @@ function renderList(type, data) {
   `;
 
   if (!data?.list?.length) {
-    html += '<div class="empty-state">暂无内容。点击「添加」开始</div>';
-    container.innerHTML = html;
-    return;
+    html += '<div class="empty-state">暂无内容。点击添加开始</div>';
+    container.innerHTML = html; return;
   }
 
   html += '<div class="grid gap-4">';
@@ -224,72 +254,187 @@ function renderList(type, data) {
     const preview = item.url || item.thumbnail || '';
     html += `
       <div class="card flex items-center gap-4 cursor-pointer" onclick="showEditor('${type}', ${i})">
-        ${preview ? `<div class="w-20 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-100"><img src="${preview}" class="w-full h-full object-cover"></div>` : ''}
+        ${preview ? `<div class="w-20 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-100"><img src="${preview}" class="w-full h-full object-cover" onerror="this.style.display=\'none\'"></div>` : ''}
         <div class="flex-1 min-w-0">
-          <div class="font-medium truncate">${title}</div>
-          <div class="text-xs text-[#888] mt-0.5">${item.date || ''} ${item.description ? '· ' + item.description : ''}</div>
+          <div class="font-medium truncate">${escapeHtml(title)}</div>
+          <div class="text-xs text-[#888] mt-0.5">${item.date || ''} ${item.description ? '· ' + escapeHtml(item.description) : ''}</div>
         </div>
         <div class="text-[#888] text-lg">→</div>
       </div>
     `;
   });
   html += '</div>';
-
   container.innerHTML = html;
 }
 
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+// ─── Image Upload Component ──────────────────────────
+
+function createUploader(currentUrl, label, key) {
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <label class="block text-xs tracking-widest text-[#888] mb-1.5">${label}</label>
+    <div class="upload-area" id="upload-${key}">
+      ${currentUrl ? `<img src="${currentUrl}" class="preview-img" onerror="this.outerHTML='<div class=\\'text-sm text-[#888]\\'>图片加载失败</div>'">` : '<div class="text-sm text-[#888]">点击或拖拽图片到此处上传</div>'}
+    </div>
+    <input type="file" id="file-${key}" accept="image/*" style="display:none">
+    <div class="progress-bar" id="progress-${key}"><div class="progress-bar-fill"></div></div>
+    <div class="flex items-center gap-2 mt-2">
+      <input type="text" id="url-${key}" value="${currentUrl || ''}" placeholder="或输入图片链接地址" class="text-sm flex-1">
+      ${currentUrl ? `<button onclick="document.getElementById('url-${key}').value='';document.getElementById('upload-${key}').innerHTML='<div class=\\'text-sm text-[#888]\\'>点击上传新图片</div>'" class="text-xs text-[#888] hover:text-red-500">清除</button>` : ''}
+    </div>
+    <input type="hidden" id="result-${key}" value="${currentUrl || ''}">
+  `;
+
+  const area = div.querySelector(`#upload-${key}`);
+  const fileInput = div.querySelector(`#file-${key}`);
+  const urlInput = div.querySelector(`#url-${key}`);
+  const resultInput = div.querySelector(`#result-${key}`);
+
+  // Click to upload
+  area.onclick = (e) => {
+    if (e.target.tagName !== 'IMG' && !e.target.closest('.btn')) {
+      fileInput.click();
+    }
+  };
+
+  // Drag and drop
+  area.ondragover = (e) => { e.preventDefault(); area.classList.add('dragover'); };
+  area.ondragleave = () => area.classList.remove('dragover');
+  area.ondrop = (e) => {
+    e.preventDefault();
+    area.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0], area, fileInput, urlInput, resultInput, key);
+  };
+
+  // File selection
+  fileInput.onchange = () => {
+    if (fileInput.files.length) handleFile(fileInput.files[0], area, fileInput, urlInput, resultInput, key);
+  };
+
+  // Manual URL
+  urlInput.oninput = () => {
+    const val = urlInput.value.trim();
+    resultInput.value = val;
+    if (val) {
+      area.innerHTML = `<img src="${val}" class="preview-img" onerror="this.outerHTML='<div class=\\'text-sm text-[#e74c3c]\\'>图片无法加载，检查链接是否正确</div>'">`;
+      area.classList.add('has-image');
+    } else {
+      area.innerHTML = '<div class="text-sm text-[#888]">点击或拖拽图片到此处上传</div>';
+      area.classList.remove('has-image');
+    }
+  };
+
+  return div;
+}
+
+async function handleFile(file, area, fileInput, urlInput, resultInput, key) {
+  // Validate type
+  if (!file.type.startsWith('image/')) {
+    toast('请选择图片文件', true); return;
+  }
+
+  // Show uploading state
+  area.innerHTML = `<div class="text-sm text-[#888]">上传中... ${file.name}</div>`;
+  area.classList.add('has-image');
+  const progressBar = document.getElementById(`progress-${key}`);
+  progressBar.classList.add('active');
+  progressBar.querySelector('.progress-bar-fill').style.width = '50%';
+
+  try {
+    // Generate unique filename
+    const ext = file.name.split('.').pop() || 'jpg';
+    const ts = Date.now();
+    const repoPath = `images/uploads/${ts}.${ext}`;
+
+    // Upload to GitHub
+    const url = await uploadFile(file, repoPath);
+
+    // Update
+    progressBar.querySelector('.progress-bar-fill').style.width = '100%';
+    setTimeout(() => { progressBar.classList.remove('active'); progressBar.querySelector('.progress-bar-fill').style.width = '0%'; }, 500);
+
+    area.innerHTML = `<img src="${url}" class="preview-img">`;
+    urlInput.value = url;
+    resultInput.value = url;
+    toast('✅ 图片已上传');
+  } catch(e) {
+    toast('❌ 上传失败: ' + e.message, true);
+    progressBar.classList.remove('active');
+    area.innerHTML = '<div class="text-sm text-[#888]">上传失败，点击重试</div>';
+  }
+}
+
 // ─── Editor Modal ─────────────────────────────────
+
 function showEditor(type, index) {
   const data = dataCache[type];
-  const item = index >= 0 ? data.list[index] : {};
+  const item = index >= 0 ? { ...data.list[index] } : {};
 
-  const labels = {
-    photos: { fields: [
-      { key: 'url', label: '图片链接', type: 'text', required: true },
+  const fieldsConfig = {
+    photos: [
       { key: 'caption', label: '标题', type: 'text', required: true },
+      { key: 'url', label: '图片', type: 'image' },
       { key: 'date', label: '日期', type: 'text', pattern: '\\d{4}\\.\\d{2}', placeholder: '2026.03' },
-    ]},
-    videos: { fields: [
+    ],
+    videos: [
       { key: 'title', label: '标题', type: 'text', required: true },
       { key: 'description', label: '描述', type: 'text' },
-      { key: 'thumbnail', label: '缩略图链接', type: 'text' },
-      { key: 'embed', label: '视频链接', type: 'text', required: true },
+      { key: 'thumbnail', label: '缩略图', type: 'image' },
+      { key: 'embed', label: '视频链接', type: 'text', required: true, placeholder: 'https://youtube.com/...' },
       { key: 'type', label: '类型', type: 'select', options: ['youtube','vimeo','local'] },
       { key: 'date', label: '日期', type: 'text', pattern: '\\d{4}\\.\\d{2}', placeholder: '2026.03' },
-    ]},
-    posts: { fields: [
+    ],
+    posts: [
       { key: 'title', label: '文章标题', type: 'text', required: true },
       { key: 'date', label: '日期', type: 'text', required: true, placeholder: '2026.06.12' },
       { key: 'dateDisplay', label: '显示日期', type: 'text', placeholder: '2026 年 6 月 12 日' },
       { key: 'excerpt', label: '摘要', type: 'textarea', required: true },
-      { key: 'content', label: '正文段落', type: 'list' },
-    ]},
+      { key: 'content', label: '正文', type: 'paragraphs' },
+    ],
   };
-  const config = labels[type];
 
+  const config = fieldsConfig[type];
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
   overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 
   let fieldsHtml = '';
-  config.fields.forEach(f => {
-    if (f.type === 'list') {
+  let uploaders = [];
+
+  config.forEach(f => {
+    if (f.type === 'image') {
+      // Will append after building html
+      uploaders.push(f);
+    } else if (f.type === 'paragraphs') {
       const paragraphs = item[f.key] || [''];
       let listHtml = paragraphs.map((p, i) => `
-        <div class="flex gap-2 mb-2">
-          <textarea class="flex-1" rows="3" data-list="${f.key}" data-idx="${i}">${p}</textarea>
-          ${i > 0 ? '<button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 text-lg">×</button>' : ''}
+        <div class="flex gap-2 mb-2 items-start">
+          <textarea class="flex-1" rows="3" data-list="${f.key}" data-idx="${i}" style="min-height:70px">${escapeHtml(p)}</textarea>
+          ${i > 0 ? '<button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 text-xl leading-none mt-2">×</button>' : ''}
         </div>
       `).join('');
       fieldsHtml += `
         <div class="mb-4">
           <label class="block text-xs tracking-widest text-[#888] mb-1.5">${f.label}</label>
           <div id="list-${f.key}">${listHtml}</div>
-          <button onclick="addParagraph('${f.key}')" class="text-xs text-[#888] hover:text-black mt-1">+ 添加段落</button>
+          <div class="flex gap-2 mt-1">
+            <button onclick="addParagraph('${f.key}')" class="text-xs text-[#888] hover:text-black">+ 添加段落</button>
+          </div>
+          <div class="mt-3 pt-3 border-t border-[#eee]">
+            <label class="block text-xs tracking-widest text-[#888] mb-1.5">导入文本文件 (.txt)</label>
+            <input type="file" accept=".txt" onchange="importTextFile(this, '${f.key}')" class="text-sm">
+            <p class="text-xs text-[#888] mt-1">每空行视为段落分隔</p>
+          </div>
         </div>
       `;
     } else if (f.type === 'select') {
-      const opts = f.options.map(o => `<option ${item[f.key] === o ? 'selected' : ''}>${o}</option>`).join('');
+      const opts = f.options.map(o => `<option ${item[f.key] === o ? 'selected' : ''} value="${o}">${o}</option>`).join('');
       fieldsHtml += `
         <div class="mb-4">
           <label class="block text-xs tracking-widest text-[#888] mb-1.5">${f.label}</label>
@@ -300,67 +445,121 @@ function showEditor(type, index) {
       fieldsHtml += `
         <div class="mb-4">
           <label class="block text-xs tracking-widest text-[#888] mb-1.5">${f.label}</label>
-          <textarea data-key="${f.key}" rows="3" ${f.required ? 'required' : ''}>${item[f.key] || ''}</textarea>
+          <textarea data-key="${f.key}" rows="3" ${f.required ? 'required' : ''}>${escapeHtml(item[f.key] || '')}</textarea>
         </div>
       `;
     } else {
       fieldsHtml += `
         <div class="mb-4">
           <label class="block text-xs tracking-widest text-[#888] mb-1.5">${f.label}</label>
-          <input type="text" data-key="${f.key}" value="${item[f.key] || ''}" ${f.required ? 'required' : ''} placeholder="${f.placeholder || ''}">
+          <input type="text" data-key="${f.key}" value="${escapeHtml(item[f.key] || '')}" ${f.required ? 'required' : ''} placeholder="${f.placeholder || ''}">
         </div>
       `;
     }
   });
 
+  // Build modal HTML
   overlay.innerHTML = `
     <div class="modal-content">
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-xl font-medium">${index >= 0 ? '编辑' : '添加'}${labels[type].title}</h3>
-        <button onclick="this.closest('.modal-overlay').remove()" class="text-2xl text-[#888] hover:text-black">×</button>
+        <h3 class="text-xl font-medium">${index >= 0 ? '编辑' : '添加'}${['照片','视频','博客'][['photos','videos','posts'].indexOf(type)]}</h3>
+        <button onclick="this.closest('.modal-overlay').remove()" class="text-2xl text-[#888] hover:text-black cursor-pointer">×</button>
       </div>
-      ${fieldsHtml}
-      <div class="flex gap-3 mt-8">
-        <button onclick="saveItem('${type}', ${index})" class="btn btn-primary flex-1">保存</button>
-        ${index >= 0 ? `<button onclick="deleteItem('${type}', ${index})" class="px-6 py-2.5 text-sm text-red-500 hover:text-red-700">删除</button>` : ''}
-        <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-secondary flex-1">取消</button>
+      <div id="modal-fields">${fieldsHtml}</div>
+      <div class="flex gap-3 mt-8 pt-4 border-t border-[#eee]">
+        <button onclick="saveItem('${type}', ${index})" class="btn btn-primary flex-1 justify-center" id="save-btn">保存</button>
+        ${index >= 0 ? `<button onclick="deleteItem('${type}', ${index})" class="btn btn-danger">删除</button>` : ''}
+        <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-secondary flex-1 justify-center">取消</button>
       </div>
     </div>
   `;
+
+  // Append uploaders after modal is in DOM
   document.body.appendChild(overlay);
+
+  uploaders.forEach(f => {
+    const fieldsDiv = document.getElementById('modal-fields');
+    const uploadContainer = document.createElement('div');
+    uploadContainer.className = 'mb-4';
+    uploadContainer.appendChild(createUploader(item[f.key] || '', f.label, f.key));
+    // Insert after the caption field for photos, or at top for videos
+    const firstField = fieldsDiv.querySelector('.mb-4');
+    if (firstField && (f.key === 'thumbnails' || type === 'photos')) {
+      fieldsDiv.insertBefore(uploadContainer, firstField.nextSibling);
+    } else {
+      fieldsDiv.prepend(uploadContainer);
+    }
+  });
+}
+
+// ─── Text File Import ──────────────────────────────
+function importTextFile(input, listKey) {
+  const file = input.files[0];
+  if (!file) return;
+
+  if (!file.name.endsWith('.txt') && file.type !== 'text/plain') {
+    toast('只支持 .txt 文件', true); return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    // Split by blank lines
+    const paragraphs = text.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
+
+    if (paragraphs.length === 0) {
+      toast('文件内容为空', true); return;
+    }
+
+    // Replace the paragraph list
+    const container = document.getElementById(`list-${listKey}`);
+    container.innerHTML = paragraphs.map((p, i) => `
+      <div class="flex gap-2 mb-2 items-start">
+        <textarea class="flex-1" rows="3" data-list="${listKey}" data-idx="${i}" style="min-height:70px">${escapeHtml(p)}</textarea>
+        ${i > 0 ? '<button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 text-xl leading-none mt-2">×</button>' : ''}
+      </div>
+    `).join('');
+
+    toast(`✅ 已导入 ${paragraphs.length} 个段落`);
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function addParagraph(key) {
   const container = document.getElementById(`list-${key}`);
+  const idx = container.children.length;
   const div = document.createElement('div');
-  div.className = 'flex gap-2 mb-2';
-  div.innerHTML = `<textarea class="flex-1" rows="3" data-list="${key}"></textarea>
-    <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 text-lg">×</button>`;
+  div.className = 'flex gap-2 mb-2 items-start';
+  div.innerHTML = `<textarea class="flex-1" rows="3" data-list="${key}" style="min-height:70px"></textarea>
+    <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 text-xl leading-none mt-2">×</button>`;
   container.appendChild(div);
 }
 
+// ─── Save / Delete ─────────────────────────────────
+
 function collectFormData(type, modal) {
-  const files = { photos: 'data/photos.json', videos: 'data/videos.json', posts: 'data/posts.json' };
-  const path = files[type];
-  const labels = { photos: 'photos', videos: 'videos', posts: 'posts' };
-
-  const data = dataCache[type];
-
-  // Get list fields
-  const listFields = ['photos','videos'].includes(type) ? [] : ['content'];
   const obj = {};
 
-  modal.querySelectorAll('input[data-key], textarea[data-key], select[data-key]').forEach(el => {
-    obj[el.dataset.key] = el.value;
+  modal.querySelectorAll('input[data-key]').forEach(el => { obj[el.dataset.key] = el.value; });
+  modal.querySelectorAll('textarea[data-key]').forEach(el => { obj[el.dataset.key] = el.value; });
+  modal.querySelectorAll('select[data-key]').forEach(el => { obj[el.dataset.key] = el.value; });
+
+  // Collect list fields (paragraphs)
+  modal.querySelectorAll('[data-list]').forEach(el => {
+    const key = el.dataset.list;
+    if (!obj[key]) obj[key] = [];
+    const idx = parseInt(el.dataset.idx) || obj[key].length;
+    obj[key][idx] = el.value;
   });
 
-  // Collect list (paragraph) fields
-  listFields.forEach(key => {
-    const items = [];
-    modal.querySelectorAll(`[data-list="${key}"]`).forEach(el => {
-      if (el.value.trim()) items.push(el.value);
-    });
-    if (items.length) obj[key] = items;
+  // Filter paragraph arrays
+  if (obj.content) obj.content = obj.content.filter(p => p && p.trim());
+
+  // Collect uploader results
+  modal.querySelectorAll('input[id^="result-"]').forEach(el => {
+    const key = el.id.replace('result-', '');
+    if (el.value) obj[key] = el.value;
   });
 
   return obj;
@@ -370,6 +569,15 @@ async function saveItem(type, index) {
   const modal = document.querySelector('.modal-overlay.active');
   const data = dataCache[type];
   const obj = collectFormData(type, modal);
+
+  // Validate required fields
+  const required = ['caption','title'];
+  for (const r of required) {
+    if (r in obj && !obj[r]) { toast(`请填写${r === 'caption' ? '标题' : r}`, true); return; }
+  }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = '保存中...';
 
   if (index >= 0) {
     data.list[index] = { ...data.list[index], ...obj };
@@ -381,18 +589,19 @@ async function saveItem(type, index) {
   const path = files[type];
 
   try {
-    const msg = index >= 0 ? `Edit ${type} item` : `Add ${type} item`;
-    await saveFile(path, data, shaCache[type], msg);
+    await saveFile(path, data, shaCache[type], index >= 0 ? `Edit ${type}` : `Add ${type}`);
     toast('✅ 已保存');
     modal.remove();
     loadData(type);
   } catch(e) {
-    toast('❌ 保存失败: ' + e.message);
+    toast('❌ 保存失败: ' + e.message, true);
+    btn.disabled = false; btn.textContent = '保存';
   }
 }
 
 async function deleteItem(type, index) {
-  if (!confirm('确定删除？')) return;
+  if (!confirm('确定删除？此操作不可撤销。')) return;
+
   const data = dataCache[type];
   data.list.splice(index, 1);
 
@@ -405,7 +614,7 @@ async function deleteItem(type, index) {
     document.querySelector('.modal-overlay.active')?.remove();
     loadData(type);
   } catch(e) {
-    toast('❌ 删除失败: ' + e.message);
+    toast('❌ 删除失败: ' + e.message, true);
   }
 }
 </script>
