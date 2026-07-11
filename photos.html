@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>照片 · ZWS Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .photo-grid {
+      column-count: 1;
+      column-gap: 1.25rem;
+    }
+    @media (min-width: 640px) { .photo-grid { column-count: 2; } }
+    @media (min-width: 1024px) { .photo-grid { column-count: 3; } }
+    .photo-item {
+      break-inside: avoid;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+    .photo-item img {
+      width: 100%;
+      border-radius: 6px;
+      transition: transform .5s cubic-bezier(0.23,1,0.32,1);
+    }
+    .photo-item:hover img {
+      transform: scale(1.012);
+    }
+    .photo-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 18px 14px;
+      background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+      color: white;
+      font-size: 13px;
+      border-radius: 0 0 6px 6px;
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+    .photo-item:hover .photo-caption {
+      opacity: 1;
+    }
+
+    /* Loading skeleton */
+    .photo-grid.loading .photo-item {
+      display: none;
+    }
+    .photo-grid.loading::after {
+      content: '加载中...';
+      display: block;
+      text-align: center;
+      padding: 60px 0;
+      color: var(--text-faint);
+      font-size: 14px;
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body class="bg-[#F9F7F2] dark:bg-[#1a1a1a] text-[#111111] dark:text-[#f0f0f0]">
+
+  <!-- Nav -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-[#F9F7F2]/95 dark:bg-[#1a1a1a]/95 backdrop-blur-md border-b border-[#E5E2D9] dark:border-[#333]">
+    <div class="max-w-6xl mx-auto px-8 flex items-center justify-between h-20">
+      <div class="flex items-center gap-x-3">
+        <a href="index.html" class="text-2xl font-medium tracking-tight">ZWS</a>
+        <span class="text-xs px-2 py-0.5 bg-[#111111] dark:bg-white text-white dark:text-[#1a1a1a] rounded">STUDIO</span>
+      </div>
+      <div class="flex items-center gap-x-9 text-sm">
+        <a href="photos.html" class="nav-link text-black dark:text-white font-medium">照片</a>
+        <a href="videos.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">视频</a>
+        <a href="blog.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">博客</a>
+        <a href="about.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">关于</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-6xl mx-auto px-8 pt-24 pb-16">
+    <div class="mb-10 reveal">
+      <span class="uppercase tracking-[3px] text-xs text-[#888888] dark:text-[#777777]">GALLERY</span>
+      <h1 class="text-5xl tracking-tight font-medium mt-1">照片</h1>
+      <p class="mt-3 text-[#555555] dark:text-[#aaaaaa] max-w-md">那些安静的瞬间。光影、寂静、以及我一个人在场。</p>
+    </div>
+
+    <!-- Photo Grid -->
+    <div class="photo-grid loading" id="photo-grid"></div>
+
+    <div class="mt-12 text-center reveal">
+      <button onclick="loadMorePhotos()"
+              class="minimal-button px-8 py-3 text-sm">
+        加载更多
+      </button>
+    </div>
+  </div>
+
+  <footer class="border-t border-[#E5E2D9] dark:border-[#333] py-8 text-xs text-[#888888] dark:text-[#777777]">
+    <div class="max-w-6xl mx-auto px-8 flex justify-between">
+      <div>&copy; ZWS Studio 2026</div>
+      <div>studio.zws875.com:8443</div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    let photos = [];
+    let displayedPhotos = 6;
+
+    async function initPhotos() {
+      try {
+        photos = await ZWS.loadJSON('data/photos.json');
+      } catch(e) {
+        console.warn('Failed to load photos.json, using defaults');
+        photos = [
+          { url: "https://picsum.photos/id/1015/1400/1000", caption: "上海 · 深夜的街道", date: "2026.03" },
+          { url: "https://picsum.photos/id/1005/1400/1000", caption: "空房间里的光", date: "2026.02" },
+          { url: "https://picsum.photos/id/1016/1400/1000", caption: "雨后的窗", date: "2026.04" },
+          { url: "https://picsum.photos/id/1033/1400/1000", caption: "一个人在海边", date: "2025.12" },
+          { url: "https://picsum.photos/id/160/1400/1000", caption: "老房子的走廊", date: "2026.01" },
+          { url: "https://picsum.photos/id/251/1400/1000", caption: "雾气中的城市", date: "2025.11" },
+        ];
+      }
+      renderPhotos();
+    }
+
+    function renderPhotos(count = displayedPhotos) {
+      const grid = document.getElementById('photo-grid');
+      grid.classList.remove('loading');
+      grid.innerHTML = '';
+
+      const toShow = photos.slice(0, count);
+
+      toShow.forEach((photo, index) => {
+        const div = document.createElement('div');
+        div.className = 'photo-item';
+        div.dataset.url = photo.url;
+        div.innerHTML = `
+          <img src="${photo.url}" alt="${photo.caption}">
+          <div class="photo-caption">
+            <div class="font-medium">${photo.caption}</div>
+            <div class="text-xs opacity-75 mt-0.5">${photo.date}</div>
+          </div>
+        `;
+        div.onclick = () => {
+          const allUrls = toShow.map(p => p.url);
+          ZWS.openLightbox(allUrls, index);
+        };
+        grid.appendChild(div);
+      });
+    }
+
+    function loadMorePhotos() {
+      displayedPhotos += 3;
+      renderPhotos(displayedPhotos);
+    }
+
+    initPhotos();
+  </script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+// ZWS Studio - Main JavaScript
+// Data loading, Lightbox, Video Modal, Dark Mode, Interactions
+
+// ─── Data Loading ───────────────────────────────────────────
+
+async function loadJSON(path) {
+  const res = await fetch(path);
+  return res.json();
+}
+
+// ─── Dark Mode ──────────────────────────────────────────────
+
+function initDarkMode() {
+  const saved = localStorage.getItem('zws-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  if (saved === 'dark' || (!saved && prefersDark)) {
+    document.documentElement.classList.add('dark');
+  }
+
+  // Create toggle button and inject it
+  const nav = document.querySelector('nav .flex.items-center.gap-x-9');
+  if (!nav) return;
+
+  const toggle = document.createElement('button');
+  toggle.id = 'dark-toggle';
+  toggle.className = 'text-sm text-[#555555] hover:text-black dark:text-[#aaaaaa] dark:hover:text-white transition-colors outline-none';
+  toggle.setAttribute('aria-label', '切换暗黑模式');
+  toggle.innerHTML = document.documentElement.classList.contains('dark')
+    ? '<span class="text-base leading-none">☀️</span>'
+    : '<span class="text-base leading-none">🌙</span>';
+
+  toggle.onclick = () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('zws-theme', isDark ? 'dark' : 'light');
+    toggle.innerHTML = isDark
+      ? '<span class="text-base leading-none">☀️</span>'
+      : '<span class="text-base leading-none">🌙</span>';
+  };
+
+  nav.appendChild(toggle);
+
+  // Listen for system preference changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!localStorage.getItem('zws-theme')) {
+      if (e.matches) {
+        document.documentElement.classList.add('dark');
+        toggle.innerHTML = '<span class="text-base leading-none">☀️</span>';
+      } else {
+        document.documentElement.classList.remove('dark');
+        toggle.innerHTML = '<span class="text-base leading-none">🌙</span>';
+      }
+    }
+  });
+}
+
+// ─── Lightbox ──────────────────────────────────────────────
+
+let currentLightboxIndex = 0;
+let currentPhotoList = [];
+
+function initLightbox() {
+  if (document.getElementById('lightbox')) return;
+
+  const lightboxHTML = `
+    <div id="lightbox">
+      <div id="lightbox-close">&times;</div>
+      <img id="lightbox-image" alt="">
+      <div id="lightbox-counter" class="absolute bottom-[90px] left-1/2 -translate-x-1/2 text-white/50 text-xs tracking-widest"></div>
+      <div class="lightbox-controls">
+        <button class="lightbox-btn" id="lightbox-prev">&larr;</button>
+        <button class="lightbox-btn" id="lightbox-next">&rarr;</button>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', lightboxHTML);
+
+  const lightbox = document.getElementById('lightbox');
+  const closeBtn = document.getElementById('lightbox-close');
+  const prevBtn = document.getElementById('lightbox-prev');
+  const nextBtn = document.getElementById('lightbox-next');
+  const img = document.getElementById('lightbox-image');
+  const counter = document.getElementById('lightbox-counter');
+
+  closeBtn.onclick = () => lightbox.classList.remove('active');
+  lightbox.onclick = (e) => {
+    if (e.target === lightbox) lightbox.classList.remove('active');
+  };
+
+  prevBtn.onclick = () => navigateLightbox(-1);
+  nextBtn.onclick = () => navigateLightbox(1);
+
+  document.addEventListener('keydown', (e) => {
+    if (!lightbox.classList.contains('active')) return;
+    if (e.key === 'Escape') lightbox.classList.remove('active');
+    if (e.key === 'ArrowLeft') navigateLightbox(-1);
+    if (e.key === 'ArrowRight') navigateLightbox(1);
+  });
+}
+
+function navigateLightbox(direction) {
+  currentLightboxIndex = (currentLightboxIndex + direction + currentPhotoList.length) % currentPhotoList.length;
+  const img = document.getElementById('lightbox-image');
+  const counter = document.getElementById('lightbox-counter');
+  img.src = currentPhotoList[currentLightboxIndex];
+  if (counter) counter.textContent = `${currentLightboxIndex + 1} / ${currentPhotoList.length}`;
+}
+
+function openLightbox(images, startIndex = 0) {
+  currentPhotoList = images;
+  currentLightboxIndex = startIndex;
+
+  const lightbox = document.getElementById('lightbox');
+  const img = document.getElementById('lightbox-image');
+  const counter = document.getElementById('lightbox-counter');
+
+  img.src = currentPhotoList[currentLightboxIndex];
+  if (counter) counter.textContent = `${currentLightboxIndex + 1} / ${currentPhotoList.length}`;
+  lightbox.classList.add('active');
+}
+
+function makePhotosClickable(containerSelector) {
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
+
+  const photos = Array.from(container.querySelectorAll('.photo-item'));
+  const imageUrls = photos.map(item => item.dataset?.url || item.querySelector('img')?.src).filter(Boolean);
+
+  photos.forEach((item, index) => {
+    item.style.cursor = 'zoom-in';
+    item.onclick = () => { openLightbox(imageUrls, index); };
+  });
+}
+
+// ─── Video Modal ────────────────────────────────────────────
+
+function openVideoModal(embedUrl, title = '') {
+  const existing = document.querySelector('.video-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.className = 'video-modal active';
+
+  let embedHTML = '';
+  if (embedUrl.includes('youtube.com') || embedUrl.includes('youtu.be')) {
+    const videoId = extractYouTubeId(embedUrl);
+    embedHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+  } else if (embedUrl.includes('vimeo.com')) {
+    const videoId = embedUrl.split('/').pop();
+    embedHTML = `<iframe src="https://player.vimeo.com/video/${videoId}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+  } else {
+    embedHTML = `<video controls autoplay><source src="${embedUrl}" type="video/mp4"></video>`;
+  }
+
+  modal.innerHTML = `
+    <div class="video-modal-content">
+      <div class="flex justify-between items-center mb-4 px-1">
+        <div class="text-white/90 text-lg font-medium">${title}</div>
+        <button class="text-white/60 hover:text-white text-3xl transition-colors cursor-pointer">&times;</button>
+      </div>
+      ${embedHTML}
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  modal.querySelector('button').onclick = () => modal.remove();
+
+  document.addEventListener('keydown', function handler(e) {
+    if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', handler); }
+  }, { once: true });
+}
+
+function extractYouTubeId(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// ─── Page Transitions ────────────────────────────────────────
+
+function initPageTransition() {
+  document.querySelectorAll('a[href]:not([target])').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && !href.startsWith('#') && !href.startsWith('http') && !href.startsWith('javascript')) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = href;
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.15s ease';
+        setTimeout(() => { window.location.href = target; }, 150);
+      });
+    }
+  });
+}
+
+// ─── Scroll Reveal ───────────────────────────────────────────
+
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}
+
+// ─── Smooth Image Load ──────────────────────────────────────
+// Only applies to images within content containers to avoid breaking nav/thumbnails
+
+function initSmoothImages() {
+  document.querySelectorAll('.photo-grid img, #featured-works img, #video-grid img, .blog-card img').forEach(img => {
+    img.classList.add('fade-in');
+    if (img.complete) {
+      img.classList.add('loaded');
+    } else {
+      img.addEventListener('load', () => img.classList.add('loaded'));
+    }
+  });
+}
+
+// ─── Initialize ──────────────────────────────────────────────
+
+function initSite() {
+  initLightbox();
+  initDarkMode();
+  initPageTransition();
+  initScrollReveal();
+  initSmoothImages();
+  document.documentElement.style.scrollBehavior = 'smooth';
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSite);
+} else {
+  initSite();
+}
+
+// ─── Global Exports ─────────────────────────────────────────
+
+window.ZWS = {
+  openLightbox,
+  openVideoModal,
+  makePhotosClickable,
+  loadJSON
+};

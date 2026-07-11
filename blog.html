@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>博客 · ZWS Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .blog-post {
+      transition: opacity 0.4s ease;
+    }
+    .blog-post.hidden-post {
+      display: none;
+    }
+    .blog-content p {
+      margin-bottom: 1.2em;
+      line-height: 1.8;
+      color: var(--text-muted);
+    }
+    .blog-content p:first-child {
+      font-size: 1.1em;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body class="bg-[#F9F7F2] dark:bg-[#1a1a1a] text-[#111111] dark:text-[#f0f0f0]">
+
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-[#F9F7F2]/95 dark:bg-[#1a1a1a]/95 backdrop-blur-md border-b border-[#E5E2D9] dark:border-[#333]">
+    <div class="max-w-6xl mx-auto px-8 flex items-center justify-between h-20">
+      <div class="flex items-center gap-x-3">
+        <a href="index.html" class="text-2xl font-medium tracking-tight">ZWS</a>
+        <span class="text-xs px-2 py-0.5 bg-[#111111] dark:bg-white text-white dark:text-[#1a1a1a] rounded">STUDIO</span>
+      </div>
+      <div class="flex items-center gap-x-9 text-sm">
+        <a href="photos.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">照片</a>
+        <a href="videos.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">视频</a>
+        <a href="blog.html" class="nav-link text-black dark:text-white font-medium">博客</a>
+        <a href="about.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">关于</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-3xl mx-auto px-8 pt-24 pb-20">
+    <div class="mb-12 reveal">
+      <span class="uppercase tracking-[3px] text-xs text-[#888888] dark:text-[#777777]">WRITINGS</span>
+      <h1 class="text-5xl tracking-tight font-medium mt-2">博客</h1>
+      <p class="mt-4 text-[#555555] dark:text-[#aaaaaa]">一些关于摄影、视频和安静生活的思考。</p>
+    </div>
+
+    <div id="blog-list" class="space-y-16">
+      <!-- Populated by JavaScript -->
+    </div>
+
+    <div id="single-post" style="display:none;">
+      <!-- Used for expanded single post view -->
+    </div>
+  </div>
+
+  <footer class="border-t border-[#E5E2D9] dark:border-[#333] py-8 text-xs text-[#888888] dark:text-[#777777]">
+    <div class="max-w-6xl mx-auto px-8 flex justify-between">
+      <div>&copy; ZWS Studio 2026</div>
+      <div>studio.zws875.com:8443</div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    let posts = [];
+
+    async function initBlog() {
+      try {
+        posts = await ZWS.loadJSON('data/posts.json');
+      } catch(e) {
+        console.warn('Failed to load posts.json, using defaults');
+        posts = [
+          { id: 1, title: "为什么我喜欢在深夜拍摄", dateDisplay: "2026 年 6 月 12 日", excerpt: "寂静的街道、空荡的房间、只有我一个人和相机。", content: ["寂静的街道、空荡的房间、只有我一个人和相机。"] },
+          { id: 2, title: "AI 正在改变我看世界的方式", dateDisplay: "2026 年 5 月 28 日", excerpt: "它不是工具，而是另一种眼睛。", content: ["它不是工具，而是另一种眼睛。"] },
+          { id: 3, title: "关于「爱寂寞」这件事", dateDisplay: "2026 年 4 月 15 日", excerpt: "很多人问我为什么总是一个人。", content: ["很多人问我为什么总是一个人。"] }
+        ];
+      }
+
+      // Check if we're viewing a single post
+      const params = new URLSearchParams(window.location.search);
+      const postId = params.get('post');
+      if (postId) {
+        showSinglePost(parseInt(postId));
+      } else {
+        showAllPosts();
+      }
+    }
+
+    function showAllPosts() {
+      const container = document.getElementById('blog-list');
+      container.style.display = 'block';
+      document.getElementById('single-post').style.display = 'none';
+      container.innerHTML = '';
+
+      posts.forEach((post, index) => {
+        const article = document.createElement('article');
+        article.className = 'reveal';
+        article.style.transitionDelay = (index * 80) + 'ms';
+        article.innerHTML = `
+          <div class="text-xs text-[#888888] dark:text-[#777777] mb-2">${post.dateDisplay}</div>
+          <h2 class="text-3xl tracking-tight font-medium mb-4">
+            <a href="?post=${post.id}" class="hover:underline">${post.title}</a>
+          </h2>
+          <div class="text-[#444444] dark:text-[#aaaaaa] leading-relaxed">
+            <p>${post.excerpt}</p>
+          </div>
+          <a href="?post=${post.id}" class="inline-block mt-4 text-sm text-[#888888] dark:text-[#777777] hover:text-black dark:hover:text-white transition-colors">
+            继续阅读 &rarr;
+          </a>
+        `;
+        container.appendChild(article);
+      });
+    }
+
+    function showSinglePost(id) {
+      const post = posts.find(p => p.id === id);
+      if (!post) {
+        showAllPosts();
+        return;
+      }
+
+      document.getElementById('blog-list').style.display = 'none';
+      const container = document.getElementById('single-post');
+      container.style.display = 'block';
+
+      container.innerHTML = `
+        <div class="reveal">
+          <a href="blog.html" class="inline-flex items-center text-sm text-[#888888] dark:text-[#777777] hover:text-black dark:hover:text-white mb-8 transition-colors">
+            &larr; 返回所有文章
+          </a>
+          <div class="text-xs text-[#888888] dark:text-[#777777] mb-2">${post.dateDisplay}</div>
+          <h2 class="text-4xl tracking-tight font-medium mb-6">${post.title}</h2>
+          <div class="blog-content text-[#444444] dark:text-[#aaaaaa] leading-relaxed">
+            ${(post.content || []).map(p => `<p>${p}</p>`).join('')}
+          </div>
+          <div class="mt-12 pt-8 border-t border-[#E5E2D9] dark:border-[#333]">
+            <a href="blog.html" class="inline-flex items-center text-sm text-[#888888] dark:text-[#777777] hover:text-black dark:hover:text-white transition-colors">
+              &larr; 返回所有文章
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    initBlog();
+  </script>
+</body>
+</html>

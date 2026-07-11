@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZWS Studio · 爱寂寞的人</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Noto+Serif+SC:wght@400;500&display=swap');
+
+    :root {
+      --bg: #F9F7F2;
+      --text: #111111;
+      --muted: #666666;
+      --accent: #3A3A3A;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    .serif {
+      font-family: 'Noto Serif SC', 'Inter', serif;
+    }
+
+    .nav-link {
+      position: relative;
+      transition: color 0.2s ease;
+    }
+
+    .nav-link:hover {
+      color: #111111;
+    }
+
+    .dark .nav-link:hover {
+      color: #ffffff;
+    }
+
+    .nav-link:after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background-color: #111111;
+      transition: width 0.3s ease;
+    }
+
+    .dark .nav-link:after {
+      background-color: #ffffff;
+    }
+
+    .nav-link:hover:after {
+      width: 100%;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+      color: #111111;
+    }
+
+    .dark .section-title {
+      color: #f0f0f0;
+    }
+
+    /* Hero animation */
+    .hero-content > * {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: heroFadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+    .hero-content > *:nth-child(1) { animation-delay: 0.1s; }
+    .hero-content > *:nth-child(2) { animation-delay: 0.25s; }
+    .hero-content > *:nth-child(3) { animation-delay: 0.4s; }
+    .hero-content > *:nth-child(4) { animation-delay: 0.55s; }
+
+    @keyframes heroFadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-[#F9F7F2] dark:bg-[#1a1a1a] text-[#111111] dark:text-[#f0f0f0]">
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-[#F9F7F2]/95 dark:bg-[#1a1a1a]/95 backdrop-blur-md border-b border-[#E5E2D9] dark:border-[#333]">
+    <div class="max-w-6xl mx-auto px-8 flex items-center justify-between h-20">
+      <div class="flex items-center gap-x-3">
+        <a href="index.html" class="text-2xl font-medium tracking-tight">ZWS</a>
+        <span class="text-xs px-2 py-0.5 bg-[#111111] dark:bg-white text-white dark:text-[#1a1a1a] rounded">STUDIO</span>
+      </div>
+
+      <div class="flex items-center gap-x-9 text-sm">
+        <a href="photos.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">照片</a>
+        <a href="videos.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">视频</a>
+        <a href="blog.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">博客</a>
+        <a href="about.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">关于</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="pt-20 max-w-6xl mx-auto px-8 pt-24 pb-16">
+    <div class="max-w-3xl hero-content">
+      <div class="flex items-center gap-x-3 mb-6">
+        <div class="w-2 h-2 bg-[#111111] dark:bg-white rounded-full"></div>
+        <span class="uppercase tracking-[3px] text-xs text-[#666666] dark:text-[#888888]">SHANGHAI · CHINA</span>
+      </div>
+
+      <h1 class="text-7xl leading-none tracking-tighter font-medium mb-6">
+        爱寂寞的人
+      </h1>
+
+      <p class="text-2xl text-[#444444] dark:text-[#aaaaaa] leading-tight tracking-tight mb-10 max-w-2xl">
+        我用镜头和时间对话。<br>
+        摄影 · 视频 · AI 视觉设计
+      </p>
+
+      <div class="flex items-center gap-x-4">
+        <a href="photos.html" class="minimal-button inline-flex items-center">查看作品</a>
+        <a href="about.html" class="text-sm px-5 py-3 text-[#555555] dark:text-[#aaaaaa] hover:text-black dark:hover:text-white transition-colors">了解我</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selected Work -->
+  <div class="max-w-6xl mx-auto px-8 pb-20">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <span class="uppercase tracking-[2px] text-xs text-[#888888] dark:text-[#777777]">SELECTED</span>
+        <h2 class="section-title text-3xl tracking-tight">精选作品</h2>
+      </div>
+      <a href="photos.html" class="text-sm text-[#555555] dark:text-[#aaaaaa] hover:text-black dark:hover:text-white flex items-center gap-x-1 transition-colors">
+        查看全部照片 <span>→</span>
+      </a>
+    </div>
+
+    <!-- Featured Photos Grid (populated from data) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="featured-works">
+      <div class="aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
+      <div class="aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
+      <div class="aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
+    </div>
+  </div>
+
+  <!-- Recent Blog -->
+  <div class="max-w-6xl mx-auto px-8 pb-20 border-t border-[#E5E2D9] dark:border-[#333] pt-16">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <span class="uppercase tracking-[2px] text-xs text-[#888888] dark:text-[#777777]">WRITING</span>
+        <h2 class="section-title text-3xl tracking-tight">最近的思考</h2>
+      </div>
+      <a href="blog.html" class="text-sm text-[#555555] dark:text-[#aaaaaa] hover:text-black dark:hover:text-white flex items-center gap-x-1 transition-colors">
+        全部博客 <span>→</span>
+      </a>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8" id="recent-posts">
+      <div class="animate-pulse">
+        <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24 mb-3"></div>
+        <div class="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4 mb-2"></div>
+        <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-full"></div>
+      </div>
+      <div class="animate-pulse">
+        <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24 mb-3"></div>
+        <div class="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4 mb-2"></div>
+        <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-full"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-[#E5E2D9] dark:border-[#333] py-8 text-xs text-[#888888] dark:text-[#777777]">
+    <div class="max-w-6xl mx-auto px-8 flex justify-between">
+      <div>&copy; ZWS Studio 2026</div>
+      <div>studio.zws875.com:8443</div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    async function initHome() {
+      // Featured works
+      try {
+        const allPhotos = await ZWS.loadJSON('data/photos.json');
+        const featured = allPhotos.slice(0, 3);
+        const grid = document.getElementById('featured-works');
+        grid.innerHTML = '';
+        featured.forEach((photo, i) => {
+          const div = document.createElement('div');
+          div.className = 'aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden cursor-pointer work-card reveal';
+          div.style.transitionDelay = (i * 100) + 'ms';
+          div.innerHTML = `<img src="${photo.url}" class="w-full h-full object-cover" alt="${photo.caption}" loading="lazy">`;
+          div.onclick = () => window.location.href = 'photos.html';
+          grid.appendChild(div);
+        });
+      } catch(e) {
+        console.warn('Featured works fallback');
+      }
+
+      // Recent posts
+      try {
+        const allPosts = await ZWS.loadJSON('data/posts.json');
+        const recent = allPosts.slice(0, 2);
+        const container = document.getElementById('recent-posts');
+        container.innerHTML = '';
+        recent.forEach(post => {
+          const div = document.createElement('div');
+          div.className = 'reveal';
+          div.innerHTML = `
+            <div class="text-xs text-[#888888] dark:text-[#777777] mb-2">${post.date || post.dateDisplay}</div>
+            <a href="blog.html?post=${post.id}" class="block text-xl tracking-tight hover:underline">${post.title}</a>
+            <p class="text-[#666666] dark:text-[#aaaaaa] mt-3 text-sm line-clamp-2">${post.excerpt}</p>
+          `;
+          container.appendChild(div);
+        });
+      } catch(e) {
+        console.warn('Recent posts fallback');
+      }
+    }
+
+    initHome();
+  </script>
+</body>
+</html>

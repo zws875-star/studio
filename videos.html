@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>视频 · ZWS Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#F9F7F2] dark:bg-[#1a1a1a] text-[#111111] dark:text-[#f0f0f0]">
+
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-[#F9F7F2]/95 dark:bg-[#1a1a1a]/95 backdrop-blur-md border-b border-[#E5E2D9] dark:border-[#333]">
+    <div class="max-w-6xl mx-auto px-8 flex items-center justify-between h-20">
+      <div class="flex items-center gap-x-3">
+        <a href="index.html" class="text-2xl font-medium tracking-tight">ZWS</a>
+        <span class="text-xs px-2 py-0.5 bg-[#111111] dark:bg-white text-white dark:text-[#1a1a1a] rounded">STUDIO</span>
+      </div>
+      <div class="flex items-center gap-x-9 text-sm">
+        <a href="photos.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">照片</a>
+        <a href="videos.html" class="nav-link text-black dark:text-white font-medium">视频</a>
+        <a href="blog.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">博客</a>
+        <a href="about.html" class="nav-link text-[#555555] dark:text-[#aaaaaa]">关于</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-6xl mx-auto px-8 pt-24 pb-16">
+    <div class="mb-10 flex items-end justify-between reveal">
+      <div>
+        <span class="uppercase tracking-[3px] text-xs text-[#888888] dark:text-[#777777]">MOVING IMAGE</span>
+        <h1 class="text-5xl tracking-tight font-medium mt-1">视频</h1>
+        <p class="mt-3 text-[#555555] dark:text-[#aaaaaa] max-w-md">缓慢的镜头，安静的叙事。</p>
+      </div>
+      <button onclick="showAddVideoModal()"
+              class="minimal-button px-6 py-2.5 text-sm flex items-center gap-x-2">
+        <span>+ 添加视频</span>
+      </button>
+    </div>
+
+    <!-- Video Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="video-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <footer class="border-t border-[#E5E2D9] dark:border-[#333] py-8 text-xs text-[#888888] dark:text-[#777777]">
+    <div class="max-w-6xl mx-auto px-8 flex justify-between">
+      <div>&copy; ZWS Studio 2026</div>
+      <div>studio.zws875.com:8443</div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    let videos = [];
+
+    async function initVideos() {
+      try {
+        videos = await ZWS.loadJSON('data/videos.json');
+      } catch(e) {
+        console.warn('Failed to load videos.json, using defaults');
+        videos = [
+          { id: 1, title: "深夜的上海", description: "一个人在城市里行走的声音", thumbnail: "https://picsum.photos/id/1015/800/450", embed: "https://www.youtube.com/watch?v=3JZ_D3ELwO4", type: "youtube" },
+          { id: 2, title: "光与影的实验", description: "用 AI 生成的视觉诗", thumbnail: "https://picsum.photos/id/1005/800/450", embed: "https://www.youtube.com/watch?v=9bZkp7q19f0", type: "youtube" },
+          { id: 3, title: "空房间", description: "记录寂静的 3 分钟", thumbnail: "https://picsum.photos/id/160/800/450", embed: "https://picsum.photos/id/160/1920/1080", type: "local" }
+        ];
+      }
+      renderVideos();
+    }
+
+    function renderVideos() {
+      const grid = document.getElementById('video-grid');
+      grid.innerHTML = '';
+
+      videos.forEach(video => {
+        const card = document.createElement('div');
+        card.className = 'group cursor-pointer reveal';
+        card.innerHTML = `
+          <div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded-xl overflow-hidden mb-4">
+            <img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="${video.title}" loading="lazy">
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110">
+                <div class="w-0 h-0 border-l-[18px] border-l-black border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent ml-1"></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="font-medium tracking-tight">${video.title}</div>
+            <div class="text-sm text-[#666666] dark:text-[#aaaaaa] mt-1">${video.description}</div>
+          </div>
+        `;
+
+        card.onclick = () => {
+          ZWS.openVideoModal(video.embed, video.title);
+        };
+
+        grid.appendChild(card);
+      });
+    }
+
+    function showAddVideoModal() {
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] dark:bg-black/80';
+      modal.innerHTML = `
+        <div class="bg-white dark:bg-[#242424] rounded-2xl w-full max-w-md p-8">
+          <h3 class="text-xl font-medium mb-6 text-[#111111] dark:text-[#f0f0f0]">添加新视频</h3>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs tracking-widest text-[#888888] dark:text-[#777777] mb-1.5">标题</label>
+              <input id="video-title" type="text" class="w-full border border-[#ddd] dark:border-[#444] bg-transparent dark:text-[#f0f0f0] px-4 py-2.5 rounded-xl text-sm" placeholder="视频标题">
+            </div>
+            <div>
+              <label class="block text-xs tracking-widest text-[#888888] dark:text-[#777777] mb-1.5">描述</label>
+              <input id="video-desc" type="text" class="w-full border border-[#ddd] dark:border-[#444] bg-transparent dark:text-[#f0f0f0] px-4 py-2.5 rounded-xl text-sm" placeholder="简短描述">
+            </div>
+            <div>
+              <label class="block text-xs tracking-widest text-[#888888] dark:text-[#777777] mb-1.5">视频链接（YouTube / Vimeo / 直链）</label>
+              <input id="video-url" type="text" class="w-full border border-[#ddd] dark:border-[#444] bg-transparent dark:text-[#f0f0f0] px-4 py-2.5 rounded-xl text-sm" placeholder="https://youtube.com/...">
+            </div>
+          </div>
+
+          <div class="flex gap-x-3 mt-8">
+            <button onclick="addNewVideo(this)" class="flex-1 bg-[#111111] dark:bg-white text-white dark:text-[#1a1a1a] py-3 rounded-2xl text-sm">添加视频</button>
+            <button onclick="this.closest('.fixed').remove()" class="flex-1 border border-[#ddd] dark:border-[#444] py-3 rounded-2xl text-sm text-[#555555] dark:text-[#aaaaaa]">取消</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function addNewVideo(btn) {
+      const modal = btn.closest('.fixed');
+      const title = modal.querySelector('#video-title').value || '未命名视频';
+      const desc = modal.querySelector('#video-desc').value || '';
+      const url = modal.querySelector('#video-url').value;
+
+      if (!url) {
+        alert('请输入视频链接');
+        return;
+      }
+
+      videos.unshift({
+        id: Date.now(),
+        title,
+        description: desc,
+        thumbnail: "https://picsum.photos/id/1015/800/450",
+        embed: url,
+        type: url.includes('youtube') || url.includes('vimeo') ? 'youtube' : 'local'
+      });
+
+      modal.remove();
+      renderVideos();
+    }
+
+    initVideos();
+  </script>
+</body>
+</html>
