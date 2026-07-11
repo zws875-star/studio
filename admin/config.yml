@@ -1,0 +1,122 @@
+# Decap CMS Configuration - ZWS Studio
+# ──────────────────────────────────────────
+# 两种部署方式选一种即可：
+#
+# [A] GitHub Pages + GitHub OAuth App（需要创建 OAuth App，2分钟）
+# [B] Netlify 部署 + Netlify Identity（内置认证，3分钟）
+#
+# 下方默认使用方案 [A]。
+# 如果选 [B]，把 backend 改成 git-gateway 模式（见底部注释）
+
+backend:
+  name: github
+  repo: zws875-star/studio
+  branch: main
+
+  # ─── OAuth 代理 ───
+  # 方案 A 需要设置一个 OAuth 代理来安全交换 GitHub 的授权码
+  # 建议用开源社区维护的：
+  #   https://oauth.casual.engineering/
+  # 用法：在 GitHub 创建 OAuth App，授权回调填那个地址，
+  #       然后把你的 Client ID 填到下面
+  # base_url: https://oauth.casual.engineering  ← 选方案A时取消注释
+  # ──────────────────
+
+# ─── 方案 B：如果部署到 Netlify，用这个配置（注释掉上面的 github backend）───
+# backend:
+#   name: git-gateway
+#   branch: main
+#
+# 然后在 Netlify 后台开启：
+#   1. Site settings → Identity → Enable
+#   2. Site settings → Identity → Git Gateway → Enable
+#   3. 邀请用户或开放注册
+# ─────────────────────────────────────────────────────────────
+
+publish_mode: editorial_workflow
+
+media_folder: "images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  # ─── 照片 ─────────────────────────────────────────
+  - name: "photos"
+    label: "照片"
+    label_singular: "照片"
+    create: false
+    delete: false
+    extension: json
+    format: json
+    files:
+      - name: "photos-list"
+        label: "照片管理"
+        file: "data/photos.json"
+        editor: { preview: false }
+        fields:
+          - label: "照片列表（拖动排序）"
+            name: "list"
+            widget: "list"
+            allow_add: true
+            allow_sort: true
+            summary: "{{fields.caption}} ({{fields.date}})"
+            fields:
+              - { label: "图片", name: "url", widget: "image", required: true }
+              - { label: "标题", name: "caption", widget: "string", required: true }
+              - { label: "日期", name: "date", widget: "string", pattern: ["^\\d{4}\\.\\d{2}$", "格式: 2026.03"] }
+
+  # ─── 视频 ─────────────────────────────────────────
+  - name: "videos"
+    label: "视频"
+    create: false
+    delete: false
+    extension: json
+    format: json
+    files:
+      - name: "videos-list"
+        label: "视频管理"
+        file: "data/videos.json"
+        editor: { preview: false }
+        fields:
+          - label: "视频列表（拖动排序）"
+            name: "list"
+            widget: "list"
+            allow_add: true
+            allow_sort: true
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "标题", name: "title", widget: "string", required: true }
+              - { label: "描述", name: "description", widget: "string" }
+              - { label: "缩略图", name: "thumbnail", widget: "image" }
+              - { label: "视频链接", name: "embed", widget: "string", hint: "YouTube / Vimeo / 直链", required: true }
+              - { label: "类型", name: "type", widget: "select", options: ["youtube", "vimeo", "local"], default: ["youtube"] }
+              - { label: "日期", name: "date", widget: "string", pattern: ["^\\d{4}\\.\\d{2}$", "格式: 2026.03"] }
+
+  # ─── 博客 ─────────────────────────────────────────
+  - name: "posts"
+    label: "博客"
+    create: false
+    delete: false
+    extension: json
+    format: json
+    files:
+      - name: "posts-list"
+        label: "博客管理"
+        file: "data/posts.json"
+        editor: { preview: false }
+        fields:
+          - label: "文章列表（拖动排序）"
+            name: "list"
+            widget: "list"
+            allow_add: true
+            allow_sort: true
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "文章标题", name: "title", widget: "string", required: true }
+              - { label: "日期", name: "date", widget: "string", pattern: ["^\\d{4}\\.\\d{2}$", "格式: 2026.06.12"] }
+              - { label: "显示日期", name: "dateDisplay", widget: "string", hint: "例: 2026 年 6 月 12 日" }
+              - { label: "摘要", name: "excerpt", widget: "text", required: true }
+              - label: "正文"
+                name: "content"
+                widget: "list"
+                summary: "第 {{index}} 段"
+                field: { label: "段落", name: "paragraph", widget: "text", required: true }
