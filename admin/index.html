@@ -146,18 +146,25 @@ function switchTab(tab, el) {
 
 // ─── GitHub API ───────────────────────────────────
 async function gh(method, path, body) {
-  const opts = {
-    method,
-    headers: {
-      'Authorization': `token ${token}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
-    },
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`${GITHUB_API}${path}`, opts);
-  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
-  return res.status === 204 ? null : await res.json();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  try {
+    const opts = {
+      method,
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(`${GITHUB_API}${path}`, opts);
+    if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
+    return res.status === 204 ? null : await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function getFile(path) {
@@ -165,10 +172,22 @@ async function getFile(path) {
   return { sha: data.sha, content: JSON.parse(atob(data.content)) };
 }
 
+function toBase64(str) {
+  // Unicode-safe base64 encoding
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 async function saveFile(path, content, sha, message) {
+  const jsonStr = JSON.stringify(content, null, 2);
+  const encoded = toBase64(jsonStr);
   return gh('PUT', `/repos/${REPO}/contents/${path}`, {
     message: message || `Update ${path}`,
-    content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+    content: encoded,
     sha, branch: BRANCH,
   });
 }
@@ -545,16 +564,17 @@ function collectFormData(type, modal) {
   modal.querySelectorAll('textarea[data-key]').forEach(el => { obj[el.dataset.key] = el.value; });
   modal.querySelectorAll('select[data-key]').forEach(el => { obj[el.dataset.key] = el.value; });
 
-  // Collect list fields (paragraphs)
-  modal.querySelectorAll('[data-list]').forEach(el => {
-    const key = el.dataset.list;
-    if (!obj[key]) obj[key] = [];
-    const idx = parseInt(el.dataset.idx) || obj[key].length;
-    obj[key][idx] = el.value;
+  // Collect paragraph lists by iterating children in DOM order
+  modal.querySelectorAll('[id^="list-"]').forEach(container => {
+    const key = container.id.replace('list-', '');
+    const textareas = container.querySelectorAll('textarea');
+    const values = [];
+    textareas.forEach(ta => {
+      const v = ta.value.trim();
+      if (v) values.push(v);
+    });
+    if (values.length > 0) obj[key] = values;
   });
-
-  // Filter paragraph arrays
-  if (obj.content) obj.content = obj.content.filter(p => p && p.trim());
 
   // Collect uploader results
   modal.querySelectorAll('input[id^="result-"]').forEach(el => {
