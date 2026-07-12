@@ -33,7 +33,7 @@
     .upload-area:hover { border-color: #111; background: #fafafa; }
     .upload-area.dragover { border-color: #111; background: #f0f0f0; }
     .upload-area.has-image { padding: 8px; border-style: solid; border-color: #ddd; }
-    .upload-area img { max-height: 160px; border-radius: 8px; }
+    .upload-area img, .upload-area video { max-height: 160px; border-radius: 8px; }
     .progress-bar { height: 4px; background: #eee; border-radius: 2px; overflow: hidden; margin-top: 8px; display: none; }
     .progress-bar.active { display: block; }
     .progress-bar-fill { height: 100%; background: #111; width: 0%; transition: width 0.3s; border-radius: 2px; }
@@ -201,13 +201,13 @@ async function saveFile(path, content, sha, message) {
     try {
       const jsonStr = JSON.stringify(saveData, null, 2);
       const encoded = toBase64(jsonStr);
-      await gh('PUT', `/repos/${REPO}/contents/${path}`, {
+      const result = await gh('PUT', `/repos/${REPO}/contents/${path}`, {
         message: message || `Update ${path}`,
         content: encoded,
         sha: currentSha,
         branch: BRANCH,
       });
-      return; // success
+      return result; // success
     } catch (e) {
       if (attempt === 1 || !e.message.startsWith('GitHub API 409')) {
         throw e;
@@ -345,17 +345,56 @@ function escapeHtml(s) {
 // ─── Image Upload Component ──────────────────────────
 
 function createUploader(currentUrl, label, key) {
+  return createMediaUploader(currentUrl, label, key, {
+    accept: 'image/*',
+    mediaType: 'image',
+    folder: 'images/uploads',
+    emptyText: '点击或拖拽图片到此处上传',
+    urlPlaceholder: '或输入图片链接地址',
+    maxSize: 10 * 1024 * 1024,
+    maxSizeText: '图片不能超过 10MB',
+  });
+}
+
+function createVideoUploader(currentUrl, label, key) {
+  return createMediaUploader(currentUrl, label, key, {
+    accept: 'video/*',
+    mediaType: 'video',
+    folder: 'videos/uploads',
+    emptyText: '点击或拖拽视频到此处上传',
+    urlPlaceholder: '或粘贴视频链接地址',
+    maxSize: 24 * 1024 * 1024,
+    maxSizeText: '视频不能超过 24MB（GitHub API 限制）',
+  });
+}
+
+function isEmbeddableVideoLink(url) {
+  return /(?:youtube\.com|youtu\.be|vimeo\.com)/i.test(url);
+}
+
+function createMediaPreview(url, mediaType) {
+  if (!url) return '';
+  if (mediaType === 'video') {
+    if (isEmbeddableVideoLink(url)) {
+      return '<div class="text-sm text-[#666]">已填写视频链接，保存后可在前台播放</div>';
+    }
+    return `<video src="${url}" class="preview-img" controls muted preload="metadata"></video>`;
+  }
+  return `<img src="${url}" class="preview-img" onerror="this.outerHTML='<div class=\\'text-sm text-[#888]\\'>图片加载失败</div>'">`;
+}
+
+function createMediaUploader(currentUrl, label, key, options) {
   const div = document.createElement('div');
   div.innerHTML = `
     <label class="block text-xs tracking-widest text-[#888] mb-1.5">${label}</label>
     <div class="upload-area" id="upload-${key}">
-      ${currentUrl ? `<img src="${currentUrl}" class="preview-img" onerror="this.outerHTML='<div class=\\'text-sm text-[#888]\\'>图片加载失败</div>'">` : '<div class="text-sm text-[#888]">点击或拖拽图片到此处上传</div>'}
+      ${currentUrl ? createMediaPreview(currentUrl, options.mediaType) : `<div class="text-sm text-[#888]">${options.emptyText}</div>`}
     </div>
-    <input type="file" id="file-${key}" accept="image/*" style="display:none">
+    <input type="file" id="file-${key}" accept="${options.accept}" style="display:none">
     <div class="progress-bar" id="progress-${key}"><div class="progress-bar-fill"></div></div>
     <div class="flex items-center gap-2 mt-2">
-      <input type="text" id="url-${key}" value="${currentUrl || ''}" placeholder="或输入图片链接地址" class="text-sm flex-1">
-      ${currentUrl ? `<button onclick="document.getElementById('url-${key}').value='';document.getElementById('upload-${key}').innerHTML='<div class=\\'text-sm text-[#888]\\'>点击上传新图片</div>'" class="text-xs text-[#888] hover:text-red-500">清除</button>` : ''}
+      <input type="text" id="url-${key}" value="${currentUrl || ''}" placeholder="${options.urlPlaceholder}" class="text-sm flex-1">
+      ${currentUrl ? `<button onclick="document.getElementById('url-${key}').value='';document.getElementById('result-${key}').value='';document.getElementById('upload-${key}').innerHTML='<div class=\\'text-sm text-[#888]\\'>${options.emptyText}</div>'" class="text-xs text-[#888] hover:text-red-500">清除</button>` : ''}
     </div>
     <input type="hidden" id="result-${key}" value="${currentUrl || ''}">
   `;
@@ -367,7 +406,7 @@ function createUploader(currentUrl, label, key) {
 
   // Click to upload
   area.onclick = (e) => {
-    if (e.target.tagName !== 'IMG' && !e.target.closest('.btn')) {
+    if (!['IMG', 'VIDEO'].includes(e.target.tagName) && !e.target.closest('.btn')) {
       fileInput.click();
     }
   };
@@ -378,12 +417,12 @@ function createUploader(currentUrl, label, key) {
   area.ondrop = (e) => {
     e.preventDefault();
     area.classList.remove('dragover');
-    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0], area, fileInput, urlInput, resultInput, key);
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0], area, fileInput, urlInput, resultInput, key, options);
   };
 
   // File selection
   fileInput.onchange = () => {
-    if (fileInput.files.length) handleFile(fileInput.files[0], area, fileInput, urlInput, resultInput, key);
+    if (fileInput.files.length) handleFile(fileInput.files[0], area, fileInput, urlInput, resultInput, key, options);
   };
 
   // Manual URL
@@ -391,10 +430,10 @@ function createUploader(currentUrl, label, key) {
     const val = urlInput.value.trim();
     resultInput.value = val;
     if (val) {
-      area.innerHTML = `<img src="${val}" class="preview-img" onerror="this.outerHTML='<div class=\\'text-sm text-[#e74c3c]\\'>图片无法加载，检查链接是否正确</div>'">`;
+      area.innerHTML = createMediaPreview(val, options.mediaType) || `<div class="text-sm text-[#888]">${options.emptyText}</div>`;
       area.classList.add('has-image');
     } else {
-      area.innerHTML = '<div class="text-sm text-[#888]">点击或拖拽图片到此处上传</div>';
+      area.innerHTML = `<div class="text-sm text-[#888]">${options.emptyText}</div>`;
       area.classList.remove('has-image');
     }
   };
@@ -402,14 +441,13 @@ function createUploader(currentUrl, label, key) {
   return div;
 }
 
-async function handleFile(file, area, fileInput, urlInput, resultInput, key) {
+async function handleFile(file, area, fileInput, urlInput, resultInput, key, options) {
   // Validate type
-  if (!file.type.startsWith('image/')) {
-    toast('请选择图片文件', true); return;
+  if (!file.type.startsWith(`${options.mediaType}/`)) {
+    toast(`请选择${options.mediaType === 'video' ? '视频' : '图片'}文件`, true); return;
   }
-  // Limit file size to 10MB (GitHub API has a 25MB limit for raw content)
-  if (file.size > 10 * 1024 * 1024) {
-    toast('图片不能超过 10MB', true); return;
+  if (file.size > options.maxSize) {
+    toast(options.maxSizeText, true); return;
   }
 
   // Show uploading state
@@ -423,7 +461,8 @@ async function handleFile(file, area, fileInput, urlInput, resultInput, key) {
     // Generate unique filename
     const ext = file.name.split('.').pop() || 'jpg';
     const ts = Date.now();
-    const repoPath = `images/uploads/${ts}.${ext}`;
+    const safeName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || ts;
+    const repoPath = `${options.folder}/${ts}-${safeName}.${ext}`;
 
     // Upload to GitHub
     const url = await uploadFile(file, repoPath);
@@ -432,10 +471,10 @@ async function handleFile(file, area, fileInput, urlInput, resultInput, key) {
     progressBar.querySelector('.progress-bar-fill').style.width = '100%';
     setTimeout(() => { progressBar.classList.remove('active'); progressBar.querySelector('.progress-bar-fill').style.width = '0%'; }, 500);
 
-    area.innerHTML = `<img src="${url}" class="preview-img">`;
+    area.innerHTML = createMediaPreview(url, options.mediaType);
     urlInput.value = url;
     resultInput.value = url;
-    toast('✅ 图片已上传');
+    toast(`✅ ${options.mediaType === 'video' ? '视频' : '图片'}已上传`);
   } catch(e) {
     toast('❌ 上传失败: ' + e.message, true);
     progressBar.classList.remove('active');
@@ -459,7 +498,7 @@ function showEditor(type, index) {
       { key: 'title', label: '标题', type: 'text', required: true },
       { key: 'description', label: '描述', type: 'text' },
       { key: 'thumbnail', label: '缩略图', type: 'image' },
-      { key: 'embed', label: '视频链接', type: 'text', required: true, placeholder: 'https://youtube.com/...' },
+      { key: 'embed', label: '视频文件 / 链接', type: 'video', required: true, placeholder: 'https://youtube.com/...' },
       { key: 'type', label: '类型', type: 'select', options: ['youtube','vimeo','local'] },
       { key: 'date', label: '日期', type: 'text', pattern: '\\d{4}\\.\\d{2}', placeholder: '2026.03' },
     ],
@@ -481,7 +520,7 @@ function showEditor(type, index) {
   let uploaders = [];
 
   config.forEach(f => {
-    if (f.type === 'image') {
+    if (f.type === 'image' || f.type === 'video') {
       // Will append after building html
       uploaders.push(f);
     } else if (f.type === 'paragraphs') {
@@ -554,7 +593,9 @@ function showEditor(type, index) {
     const fieldsDiv = document.getElementById('modal-fields');
     const uploadContainer = document.createElement('div');
     uploadContainer.className = 'mb-4';
-    uploadContainer.appendChild(createUploader(item[f.key] || '', f.label, f.key));
+    uploadContainer.appendChild(f.type === 'video'
+      ? createVideoUploader(item[f.key] || '', f.label, f.key)
+      : createUploader(item[f.key] || '', f.label, f.key));
     // Insert after the caption field for photos, or at top for videos
     const firstField = fieldsDiv.querySelector('.mb-4');
     if (firstField && (f.key === 'thumbnails' || type === 'photos')) {
@@ -649,6 +690,15 @@ async function saveItem(type, index) {
   for (const r of required) {
     if (r in obj && !obj[r]) { toast(`请填写${r === 'caption' ? '标题' : r}`, true); return; }
   }
+  if (type === 'videos' && !obj.embed) {
+    toast('请上传视频文件或填写视频链接', true);
+    return;
+  }
+  if (type === 'videos' && obj.embed) {
+    if (obj.embed.includes('vimeo.com')) obj.type = 'vimeo';
+    else if (obj.embed.includes('youtube.com') || obj.embed.includes('youtu.be')) obj.type = 'youtube';
+    else obj.type = 'local';
+  }
 
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = '保存中...';
@@ -670,9 +720,11 @@ async function saveItem(type, index) {
     );
     
     await Promise.race([savePromise, timeoutPromise]);
+    const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
+    shaCache[type] = fresh.sha;
     toast('✅ 已保存');
     modal.remove();
-    loadData(type);
+    renderList(type, data);
   } catch(e) {
     console.error('Save error:', e);
     let msg = e.message;
@@ -696,9 +748,11 @@ async function deleteItem(type, index) {
 
   try {
     await saveFile(path, data, shaCache[type], `Delete ${type} item`);
+    const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
+    shaCache[type] = fresh.sha;
     toast('✅ 已删除');
     document.querySelector('.modal-overlay.active')?.remove();
-    loadData(type);
+    renderList(type, data);
   } catch(e) {
     toast('❌ 删除失败: ' + e.message, true);
   }

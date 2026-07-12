@@ -148,6 +148,25 @@
     </div>
   </div>
 
+  <!-- Recent Videos -->
+  <div class="max-w-6xl mx-auto px-8 pb-20 border-t border-[#E5E2D9] dark:border-[#333] pt-16">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <span class="uppercase tracking-[2px] text-xs text-[#888888] dark:text-[#777777]">VIDEO</span>
+        <h2 class="section-title text-3xl tracking-tight">最近的视频</h2>
+      </div>
+      <a href="videos.html" class="text-sm text-[#555555] dark:text-[#aaaaaa] hover:text-black dark:hover:text-white flex items-center gap-x-1 transition-colors">
+        全部视频 <span>→</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="recent-videos">
+      <div class="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
+      <div class="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
+      <div class="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
+    </div>
+  </div>
+
   <!-- Recent Blog -->
   <div class="max-w-6xl mx-auto px-8 pb-20 border-t border-[#E5E2D9] dark:border-[#333] pt-16">
     <div class="flex items-end justify-between mb-8">
@@ -184,22 +203,62 @@
   <script src="main.js"></script>
   <script>
     async function initHome() {
+      const escapeHtml = (s) => {
+        const d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+      };
+
       // Featured works
       try {
         const allPhotos = await ZWS.loadJSON('data/photos.json');
         const featured = allPhotos.slice(0, 3);
         const grid = document.getElementById('featured-works');
         grid.innerHTML = '';
+        if (!featured.length) {
+          grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无照片</div>';
+        }
         featured.forEach((photo, i) => {
           const div = document.createElement('div');
           div.className = 'aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden cursor-pointer work-card reveal';
           div.style.transitionDelay = (i * 100) + 'ms';
-          div.innerHTML = `<img src="${photo.url}" class="w-full h-full object-cover" alt="${photo.caption}" loading="lazy">`;
+          div.innerHTML = `<img src="${photo.url}" class="w-full h-full object-cover" alt="${escapeHtml(photo.caption)}" loading="lazy">`;
           div.onclick = () => window.location.href = 'photos.html';
           grid.appendChild(div);
         });
       } catch(e) {
         console.warn('Featured works fallback');
+      }
+
+      // Recent videos
+      try {
+        const allVideos = await ZWS.loadJSON('data/videos.json');
+        const recentVideos = allVideos.slice(0, 3);
+        const grid = document.getElementById('recent-videos');
+        grid.innerHTML = '';
+        if (!recentVideos.length) {
+          grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无视频</div>';
+        }
+        recentVideos.forEach(video => {
+          const div = document.createElement('div');
+          div.className = 'group cursor-pointer reveal';
+          div.innerHTML = `
+            <div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded overflow-hidden mb-3">
+              ${video.thumbnail ? `<img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="${escapeHtml(video.title)}" loading="lazy">` : ''}
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110">
+                  <div class="w-0 h-0 border-l-[15px] border-l-black border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div>
+                </div>
+              </div>
+            </div>
+            <div class="font-medium tracking-tight">${escapeHtml(video.title)}</div>
+            <div class="text-sm text-[#666666] dark:text-[#aaaaaa] mt-1 line-clamp-2">${escapeHtml(video.description)}</div>
+          `;
+          div.onclick = () => ZWS.openVideoModal(video.embed, video.title);
+          grid.appendChild(div);
+        });
+      } catch(e) {
+        console.warn('Recent videos fallback');
       }
 
       // Recent posts

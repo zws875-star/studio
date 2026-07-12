@@ -34,10 +34,6 @@
         <h1 class="text-5xl tracking-tight font-medium mt-1">视频</h1>
         <p class="mt-3 text-[#555555] dark:text-[#aaaaaa] max-w-md">缓慢的镜头，安静的叙事。</p>
       </div>
-      <button onclick="showAddVideoModal()"
-              class="minimal-button px-6 py-2.5 text-sm flex items-center gap-x-2">
-        <span>+ 添加视频</span>
-      </button>
     </div>
 
     <!-- Video Grid -->
@@ -100,61 +96,6 @@
 
         grid.appendChild(card);
       });
-    }
-
-    function showAddVideoModal() {
-      const modal = document.createElement('div');
-      modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] dark:bg-black/80';
-      modal.innerHTML = `
-        <div class="bg-white dark:bg-[#242424] rounded-2xl w-full max-w-md p-8">
-          <h3 class="text-xl font-medium mb-6 text-[#111111] dark:text-[#f0f0f0]">添加新视频</h3>
-
-          <div class="space-y-4">
-            <div>
-              <label class="block text-xs tracking-widest text-[#888888] dark:text-[#777777] mb-1.5">标题</label>
-              <input id="video-title" type="text" class="w-full border border-[#ddd] dark:border-[#444] bg-transparent dark:text-[#f0f0f0] px-4 py-2.5 rounded-xl text-sm" placeholder="视频标题">
-            </div>
-            <div>
-              <label class="block text-xs tracking-widest text-[#888888] dark:text-[#777777] mb-1.5">描述</label>
-              <input id="video-desc" type="text" class="w-full border border-[#ddd] dark:border-[#444] bg-transparent dark:text-[#f0f0f0] px-4 py-2.5 rounded-xl text-sm" placeholder="简短描述">
-            </div>
-            <div>
-              <label class="block text-xs tracking-widest text-[#888888] dark:text-[#777777] mb-1.5">视频链接（YouTube / Vimeo / 直链）</label>
-              <input id="video-url" type="text" class="w-full border border-[#ddd] dark:border-[#444] bg-transparent dark:text-[#f0f0f0] px-4 py-2.5 rounded-xl text-sm" placeholder="https://youtube.com/...">
-            </div>
-          </div>
-
-          <div class="flex gap-x-3 mt-8">
-            <button onclick="addNewVideo(this)" class="flex-1 bg-[#111111] dark:bg-white text-white dark:text-[#1a1a1a] py-3 rounded-2xl text-sm">添加视频</button>
-            <button onclick="this.closest('.fixed').remove()" class="flex-1 border border-[#ddd] dark:border-[#444] py-3 rounded-2xl text-sm text-[#555555] dark:text-[#aaaaaa]">取消</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-    }
-
-    function addNewVideo(btn) {
-      const modal = btn.closest('.fixed');
-      const title = modal.querySelector('#video-title').value || '未命名视频';
-      const desc = modal.querySelector('#video-desc').value || '';
-      const url = modal.querySelector('#video-url').value;
-
-      if (!url) {
-        alert('请输入视频链接');
-        return;
-      }
-
-      videos.unshift({
-        id: Date.now(),
-        title,
-        description: desc,
-        thumbnail: "",
-        embed: url,
-        type: url.includes('youtube') || url.includes('vimeo') ? 'youtube' : 'local'
-      });
-
-      modal.remove();
-      renderVideos();
     }
 
     initVideos();
