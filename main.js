@@ -5,36 +5,38 @@
 
 async function loadJSON(path) {
   const timestamp = Date.now();
-  const tryUrls = [];
 
-  // Primary: current origin (custom domain or GitHub Pages)
-  const primary = path.includes('?') 
-    ? `${path}&t=${timestamp}` 
-    : `${path}?t=${timestamp}`;
-  tryUrls.push(primary);
+  // Always try raw.githubusercontent.com first for reliability
+  const repoPath = path.replace(/^\//, '');
+  const rawUrl = `https://raw.githubusercontent.com/zws875-star/studio/main/${repoPath}?t=${timestamp}`;
 
-  // Fallback: raw.githubusercontent.com (most reliable)
-  if (!path.startsWith('http')) {
-    const repoPath = path.replace(/^\//, '');
-    tryUrls.push(`https://raw.githubusercontent.com/zws875-star/studio/main/${repoPath}?t=${timestamp}`);
-  }
-
-  for (const url of tryUrls) {
-    try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) continue;
+  try {
+    const res = await fetch(rawUrl, { cache: 'no-store' });
+    if (res.ok) {
       const data = await res.json();
       const result = Array.isArray(data) ? data : (data?.list || []);
-      if (result.length > 0) {
-        console.log('[loadJSON] success from', url, result.length, 'items');
-        return result;
-      }
-    } catch(e) {
-      console.warn('[loadJSON] failed', url, e.message);
+      console.log('[loadJSON] success from raw', result.length, 'items');
+      return result;
     }
+  } catch(e) {
+    console.warn('[loadJSON] raw failed', e.message);
   }
 
-  console.warn('[loadJSON] all sources failed for', path);
+  // Fallback to current origin
+  const localUrl = path.includes('?') ? `${path}&t=${timestamp}` : `${path}?t=${timestamp}`;
+  try {
+    const res = await fetch(localUrl, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      const result = Array.isArray(data) ? data : (data?.list || []);
+      console.log('[loadJSON] success from local', result.length, 'items');
+      return result;
+    }
+  } catch(e) {
+    console.warn('[loadJSON] local failed', e.message);
+  }
+
+  console.warn('[loadJSON] all failed for', path);
   return [];
 }
 
