@@ -183,11 +183,14 @@ function toBase64(str) {
 }
 
 async function saveFile(path, content, sha, message) {
+  // Write flat array (content.list || content) for front-end compatibility
+  const saveData = content && content.list ? content.list : content;
+  
   // Try saving; if SHA conflict (409), re-fetch latest SHA and retry once
   let currentSha = sha;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const jsonStr = JSON.stringify(content, null, 2);
+      const jsonStr = JSON.stringify(saveData, null, 2);
       const encoded = toBase64(jsonStr);
       await gh('PUT', `/repos/${REPO}/contents/${path}`, {
         message: message || `Update ${path}`,
@@ -198,19 +201,19 @@ async function saveFile(path, content, sha, message) {
       return; // success
     } catch (e) {
       if (attempt === 1 || !e.message.startsWith('GitHub API 409')) {
-        // Re-fetch latest sha and retry
-        try {
-          const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
-          currentSha = fresh.sha;
-          // Update sha cache so next save won't conflict again
-          const type = Object.entries({photos:'data/photos.json',videos:'data/videos.json',posts:'data/posts.json'}).find(([,p]) => p === path)?.[0];
-          if (type) shaCache[type] = fresh.sha;
-          continue; // retry with fresh sha
-        } catch (fetchError) {
-          throw fetchError;
-        }
+        throw e;
       }
-      throw e; // non-conflict or retry exhausted
+      // SHA conflict: re-fetch latest sha and retry once
+      try {
+        const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
+        currentSha = fresh.sha;
+        // Update sha cache so next save won't conflict again
+        const type = Object.entries({photos:'data/photos.json',videos:'data/videos.json',posts:'data/posts.json'}).find(([,p]) => p === path)?.[0];
+        if (type) shaCache[type] = fresh.sha;
+        // continue loop to retry
+      } catch (fetchError) {
+        throw new Error('SHA冲突，自动重试时获取数据失败');
+      }
     }
   }
 }
@@ -263,10 +266,22 @@ async function loadData(type) {
   try {
     const { sha, content } = await getFile(path);
     shaCache[type] = sha;
-    dataCache[type] = content;
-    renderList(type, content);
+    
+    // Normalize: if content is a flat array (old format), wrap in {list: [...]}
+    let normalized = content;
+    if (Array.isArray(content)) {
+      normalized = { list: content };
+    } else if (!content || !content.list) {
+      normalized = { list: [] };
+    }
+    
+    dataCache[type] = normalized;
+    renderList(type, normalized);
   } catch(e) {
+    console.error('loadData error:', e);
     container.innerHTML = `<div class="empty-state">加载失败: ${e.message}</div>`;
+    // Initialize with empty list so save doesn't crash
+    dataCache[type] = { list: [] };
   }
 }
 
