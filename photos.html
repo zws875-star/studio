@@ -99,12 +99,6 @@
     <!-- Photo Grid -->
     <div class="photo-grid loading" id="photo-grid"></div>
 
-    <div class="mt-12 text-center reveal">
-      <button onclick="loadMorePhotos()"
-              class="minimal-button px-8 py-3 text-sm">
-        加载更多
-      </button>
-    </div>
   </div>
 
   <footer class="border-t border-[#E5E2D9] dark:border-[#333] py-8 text-xs text-[#888888] dark:text-[#777777]">
@@ -117,8 +111,6 @@
   <script src="main.js?v=4"></script>
   <script>
     let photos = [];
-    let displayedPhotos = 6;
-
     async function initPhotos() {
       try {
         photos = await ZWS.loadJSON('data/photos.json');
@@ -129,19 +121,21 @@
       renderPhotos();
     }
 
-    function renderPhotos(count = displayedPhotos) {
+    function renderPhotos() {
       const grid = document.getElementById('photo-grid');
       grid.classList.remove('loading');
       grid.innerHTML = '';
 
-      const toShow = photos.filter(photo => photo.published !== false).slice(0, count);
+      const publishedPhotos = photos.filter(photo => photo.published !== false);
 
-      if (!toShow.length) {
+      if (!publishedPhotos.length) {
         grid.innerHTML = '<div class="col-span-full text-center py-16 text-[#888888]">暂无照片</div>';
         return;
       }
 
-      toShow.forEach((photo, index) => {
+      const allUrls = publishedPhotos.map(photo => ZWS.assetUrl(photo.url || photo.mediaUrl));
+
+      publishedPhotos.forEach((photo, index) => {
         const div = document.createElement('div');
         div.className = 'photo-item';
         const photoUrl = ZWS.assetUrl(photo.url || photo.mediaUrl);
@@ -154,16 +148,10 @@
           </div>
         `;
         div.onclick = () => {
-          const allUrls = toShow.map(p => ZWS.assetUrl(p.url || p.mediaUrl));
           ZWS.openLightbox(allUrls, index);
         };
         grid.appendChild(div);
       });
-    }
-
-    function loadMorePhotos() {
-      displayedPhotos += 3;
-      renderPhotos(displayedPhotos);
     }
 
     initPhotos();
