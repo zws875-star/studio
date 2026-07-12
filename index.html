@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ZWS Studio · 爱寂寞的人</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class' }
@@ -69,7 +72,6 @@
       color: #f0f0f0;
     }
 
-    /* Hero animation */
     .hero-content > * {
       opacity: 0;
       transform: translateY(20px);
@@ -82,6 +84,11 @@
 
     @keyframes heroFadeIn {
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Status bar for debugging */
+    #page-status {
+      display: none;
     }
   </style>
 </head>
@@ -140,7 +147,6 @@
       </a>
     </div>
 
-    <!-- Featured Photos Grid (populated from data) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="featured-works"></div>
   </div>
 
@@ -181,110 +187,137 @@
     </div>
   </footer>
 
-  <script src="main.js"></script>
+  <script src="main.js?v=2"></script>
   <script>
-    (async function initHome() {
-      // Helper
-      function esc(s) {
-        var d = document.createElement('div');
-        d.textContent = s || '';
-        return d.innerHTML;
+  // Status tracker visible on page
+  document.getElementById('featured-works').innerHTML = '<div class="col-span-full text-center py-12 text-[#888]">加载中...</div>';
+
+  (function() {
+    // Load data via XMLHttpRequest (synchronous-style but async)
+    function loadJSON(path, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://raw.githubusercontent.com/zws875-star/studio/main/' + path + '?t=' + Date.now(), true);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            callback(Array.isArray(data) ? data : (data && data.list ? data.list : []));
+          } catch(e) {
+            callback([]);
+          }
+        } else {
+          // Fallback to local
+          var xhr2 = new XMLHttpRequest();
+          xhr2.open('GET', path + '?t=' + Date.now(), true);
+          xhr2.onload = function() {
+            if (xhr2.status === 200) {
+              try {
+                var data = JSON.parse(xhr2.responseText);
+                callback(Array.isArray(data) ? data : (data && data.list ? data.list : []));
+              } catch(e) {
+                callback([]);
+              }
+            } else {
+              callback([]);
+            }
+          };
+          xhr2.onerror = function() { callback([]); };
+          xhr2.send();
+        }
+      };
+      xhr.onerror = function() {
+        callback([]);
+      };
+      xhr.send();
+    }
+
+    // Render photos
+    loadJSON('data/photos.json', function(items) {
+      var g = document.getElementById('featured-works');
+      if (!g) return;
+      g.innerHTML = '';
+      var slice = items.slice(0, 3);
+      if (slice.length === 0) {
+        g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888]">暂无照片</div>';
+        return;
       }
+      for (var i = 0; i < slice.length; i++) {
+        var p = slice[i];
+        var d = document.createElement('div');
+        d.style.cssText = 'aspect-ratio:16/10;background:#f1f1f1;border-radius:8px;overflow:hidden;cursor:pointer;';
+        var img = document.createElement('img');
+        img.src = p.url || '';
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        img.alt = p.caption || '';
+        img.loading = 'lazy';
+        d.appendChild(img);
+        d.onclick = function() { window.location.href = 'photos.html'; };
+        g.appendChild(d);
+      }
+    });
 
-      // 1) Featured works
-      try {
-        var items = await ZWS.loadJSON('data/photos.json');
-        var g = document.getElementById('featured-works');
-        if (g) {
-          g.innerHTML = '';
-          var slice = items.slice(0, 3);
-          if (slice.length === 0) {
-            g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无照片</div>';
-          } else {
-            for (var i = 0; i < slice.length; i++) {
-              (function(photo) {
-                var d = document.createElement('div');
-                d.style.cssText = 'aspect-ratio:16/10;background:#f1f1f1;border-radius:8px;overflow:hidden;cursor:pointer;';
-                var img = document.createElement('img');
-                img.src = photo.url || '';
-                img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-                img.alt = esc(photo.caption || '');
-                img.loading = 'lazy';
-                img.onerror = function() { this.style.display = 'none'; };
-                d.appendChild(img);
-                d.onclick = function() { window.location.href = 'photos.html'; };
-                g.appendChild(d);
-              })(slice[i]);
-            }
-          }
+    // Render videos
+    loadJSON('data/videos.json', function(items) {
+      var g = document.getElementById('recent-videos');
+      if (!g) return;
+      g.innerHTML = '';
+      var slice = items.slice(0, 3);
+      if (slice.length === 0) {
+        g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888]">暂无视频</div>';
+        return;
+      }
+      for (var i = 0; i < slice.length; i++) {
+        var v = slice[i];
+        var d = document.createElement('div');
+        d.className = 'group cursor-pointer reveal';
+        var html = '<div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded overflow-hidden mb-3">';
+        if (v.thumbnail) {
+          html += '<img src="' + v.thumbnail.replace(/"/g, '') + '" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="" loading="lazy">';
         }
-      } catch(e) { console.error('photos err', e); }
+        html += '<div class="absolute inset-0 flex items-center justify-center"><div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110"><div class="w-0 h-0 border-l-[15px] border-l-black border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div></div></div></div>';
+        html += '<div class="font-medium tracking-tight">' + (v.title || '').replace(/</g, '&lt;') + '</div>';
+        html += '<div class="text-sm text-[#666] dark:text-[#aaa] mt-1 line-clamp-2">' + (v.description || '').replace(/</g, '&lt;') + '</div>';
+        d.innerHTML = html;
+        d.onclick = function() {
+          if (window.ZWS && ZWS.openVideoModal) {
+            ZWS.openVideoModal(v.embed, v.title);
+          }
+        };
+        g.appendChild(d);
+      }
+    });
 
-      // 2) Recent videos
-      try {
-        var items = await ZWS.loadJSON('data/videos.json');
-        var g = document.getElementById('recent-videos');
-        if (g) {
-          g.innerHTML = '';
-          var slice = items.slice(0, 3);
-          if (slice.length === 0) {
-            g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无视频</div>';
-          } else {
-            for (var i = 0; i < slice.length; i++) {
-              (function(video) {
-                var d = document.createElement('div');
-                d.className = 'group cursor-pointer reveal';
-                var thumb = video.thumbnail || '';
-                var html = '<div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded overflow-hidden mb-3">';
-                if (thumb) {
-                  html += '<img src="' + thumb + '" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="" loading="lazy">';
-                }
-                html += '<div class="absolute inset-0 flex items-center justify-center"><div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110"><div class="w-0 h-0 border-l-[15px] border-l-black border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div></div></div></div>';
-                html += '<div class="font-medium tracking-tight">' + esc(video.title) + '</div>';
-                html += '<div class="text-sm text-[#666666] dark:text-[#aaaaaa] mt-1 line-clamp-2">' + esc(video.description) + '</div>';
-                d.innerHTML = html;
-                d.onclick = function() { ZWS.openVideoModal(video.embed, video.title); };
-                g.appendChild(d);
-              })(slice[i]);
-            }
-          }
-        }
-      } catch(e) { console.error('videos err', e); }
-
-      // 3) Recent posts
-      try {
-        var items = await ZWS.loadJSON('data/posts.json');
-        var g = document.getElementById('recent-posts');
-        if (g) {
-          g.innerHTML = '';
-          var slice = items.slice(0, 2);
-          if (slice.length === 0) {
-            g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无文章</div>';
-          } else {
-            for (var i = 0; i < slice.length; i++) {
-              (function(post) {
-                var d = document.createElement('div');
-                d.className = 'reveal';
-                var de = document.createElement('div');
-                de.className = 'text-xs text-[#888888] dark:text-[#777777] mb-2';
-                de.textContent = post.date || post.dateDisplay || '';
-                d.appendChild(de);
-                var a = document.createElement('a');
-                a.href = 'blog.html?post=' + post.id;
-                a.className = 'block text-xl tracking-tight hover:underline';
-                a.textContent = post.title || '';
-                d.appendChild(a);
-                var pe = document.createElement('p');
-                pe.className = 'text-[#666666] dark:text-[#aaaaaa] mt-3 text-sm line-clamp-2';
-                pe.textContent = post.excerpt || '';
-                d.appendChild(pe);
-                g.appendChild(d);
-              })(slice[i]);
-            }
-          }
-        }
-      } catch(e) { console.error('posts err', e); }
-    })();
+    // Render posts
+    loadJSON('data/posts.json', function(items) {
+      var g = document.getElementById('recent-posts');
+      if (!g) return;
+      g.innerHTML = '';
+      var slice = items.slice(0, 2);
+      if (slice.length === 0) {
+        g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888]">暂无文章</div>';
+        return;
+      }
+      for (var i = 0; i < slice.length; i++) {
+        var post = slice[i];
+        var d = document.createElement('div');
+        d.className = 'reveal';
+        var de = document.createElement('div');
+        de.className = 'text-xs text-[#888] dark:text-[#777] mb-2';
+        de.textContent = post.date || post.dateDisplay || '';
+        d.appendChild(de);
+        var a = document.createElement('a');
+        a.href = 'blog.html?post=' + post.id;
+        a.className = 'block text-xl tracking-tight hover:underline';
+        a.textContent = post.title || '';
+        d.appendChild(a);
+        var pe = document.createElement('p');
+        pe.className = 'text-[#666] dark:text-[#aaa] mt-3 text-sm line-clamp-2';
+        pe.textContent = post.excerpt || '';
+        d.appendChild(pe);
+        g.appendChild(d);
+      }
+    });
+  })();
   </script>
 </body>
 </html>
