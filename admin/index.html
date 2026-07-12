@@ -196,7 +196,7 @@ async function saveFile(path, content, sha, message) {
   const jsonStr = JSON.stringify(saveData, null, 2);
   const encoded = toBase64(jsonStr);
 
-  await gh('PUT', `/repos/${REPO}/contents/${path}`, {
+  return await gh('PUT', `/repos/${REPO}/contents/${path}`, {
     message: message || `Update ${path}`,
     content: encoded,
     sha,
@@ -236,8 +236,8 @@ async function uploadFile(localFile, repoPath) {
     branch: BRANCH,
   });
 
-  // Keep uploaded assets on the site's own origin instead of depending on Raw GitHub.
-  return `/${repoPath}?v=${Date.now()}`;
+  // Raw GitHub is available immediately; public pages normalize it to same-origin.
+  return `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${repoPath}?v=${Date.now()}`;
 }
 
 // ─── Data Loading ─────────────────────────────────
@@ -712,15 +712,9 @@ async function saveItem(type, index) {
       setTimeout(() => reject(new Error('保存超时（45秒）')), 45000)
     );
     
-    await Promise.race([savePromise, timeoutPromise]);
-    const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
-    shaCache[type] = fresh.sha;
-    const savedData = JSON.parse(fromBase64(fresh.content));
-    const savedList = Array.isArray(savedData) ? savedData : (savedData.list || []);
-    const savedItem = index >= 0 ? savedList[index] : savedList[0];
-    if (validateItem(type, savedItem || {}) || savedItem.published !== true || savedItem.kind !== obj.kind) {
-      throw new Error('保存后的内容校验失败，请重试');
-    }
+    const saved = await Promise.race([savePromise, timeoutPromise]);
+    if (!saved || !saved.content || !saved.content.sha) throw new Error('GitHub 未返回保存结果，请重试');
+    shaCache[type] = saved.content.sha;
     toast('✅ 已保存并公开');
     modal.remove();
     renderList(type, data);
@@ -746,9 +740,9 @@ async function deleteItem(type, index) {
   const path = files[type];
 
   try {
-    await saveFile(path, data, shaCache[type], `Delete ${type} item`);
-    const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
-    shaCache[type] = fresh.sha;
+    const saved = await saveFile(path, data, shaCache[type], `Delete ${type} item`);
+    if (!saved || !saved.content || !saved.content.sha) throw new Error('GitHub 未返回删除结果，请重试');
+    shaCache[type] = saved.content.sha;
     toast('✅ 已删除');
     document.querySelector('.modal-overlay.active')?.remove();
     renderList(type, data);
