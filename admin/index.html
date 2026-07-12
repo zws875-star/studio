@@ -169,7 +169,16 @@ async function gh(method, path, body) {
 
 async function getFile(path) {
   const data = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
-  return { sha: data.sha, content: JSON.parse(atob(data.content)) };
+  return { sha: data.sha, content: JSON.parse(fromBase64(data.content)) };
+}
+
+function fromBase64(str) {
+  const binary = atob(str.replace(/\s/g, ''));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
 }
 
 function toBase64(str) {
@@ -647,7 +656,7 @@ async function saveItem(type, index) {
   if (index >= 0) {
     data.list[index] = { ...data.list[index], ...obj };
   } else {
-    data.list.push(obj);
+    data.list.unshift(obj);
   }
 
   const files = { photos: 'data/photos.json', videos: 'data/videos.json', posts: 'data/posts.json' };

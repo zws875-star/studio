@@ -61,12 +61,8 @@
       try {
         videos = await ZWS.loadJSON('data/videos.json');
       } catch(e) {
-        console.warn('Failed to load videos.json, using defaults');
-        videos = [
-          { id: 1, title: "深夜的上海", description: "一个人在城市里行走的声音", thumbnail: "https://picsum.photos/id/1015/800/450", embed: "https://www.youtube.com/watch?v=3JZ_D3ELwO4", type: "youtube" },
-          { id: 2, title: "光与影的实验", description: "用 AI 生成的视觉诗", thumbnail: "https://picsum.photos/id/1005/800/450", embed: "https://www.youtube.com/watch?v=9bZkp7q19f0", type: "youtube" },
-          { id: 3, title: "空房间", description: "记录寂静的 3 分钟", thumbnail: "https://picsum.photos/id/160/800/450", embed: "https://picsum.photos/id/160/1920/1080", type: "local" }
-        ];
+        console.warn('Failed to load videos.json');
+        videos = [];
       }
       renderVideos();
     }
@@ -75,12 +71,17 @@
       const grid = document.getElementById('video-grid');
       grid.innerHTML = '';
 
+      if (!videos.length) {
+        grid.innerHTML = '<div class="col-span-full text-center py-16 text-[#888888]">暂无视频</div>';
+        return;
+      }
+
       videos.forEach(video => {
         const card = document.createElement('div');
         card.className = 'group cursor-pointer reveal';
         card.innerHTML = `
           <div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded-xl overflow-hidden mb-4">
-            <img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="${video.title}" loading="lazy">
+            ${video.thumbnail ? `<img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="${video.title}" loading="lazy">` : ''}
             <div class="absolute inset-0 flex items-center justify-center">
               <div class="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110">
                 <div class="w-0 h-0 border-l-[18px] border-l-black border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent ml-1"></div>
@@ -147,7 +148,7 @@
         id: Date.now(),
         title,
         description: desc,
-        thumbnail: "https://picsum.photos/id/1015/800/450",
+        thumbnail: "",
         embed: url,
         type: url.includes('youtube') || url.includes('vimeo') ? 'youtube' : 'local'
       });

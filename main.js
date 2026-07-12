@@ -4,8 +4,10 @@
 // ─── Data Loading ───────────────────────────────────────────
 
 async function loadJSON(path) {
-  const res = await fetch(path);
-  return res.json();
+  const url = path.includes('?') ? `${path}&t=${Date.now()}` : `${path}?t=${Date.now()}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data?.list || []);
 }
 
 // ─── Dark Mode ──────────────────────────────────────────────
