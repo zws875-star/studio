@@ -5,8 +5,20 @@
 
 async function loadJSON(path) {
   const timestamp = Date.now();
+  const localUrl = path.includes('?') ? `${path}&t=${timestamp}` : `${path}?t=${timestamp}`;
 
-  // Always try raw.githubusercontent.com first for reliability
+  // Prefer the deployed copy so content and uploaded files come from one release.
+  try {
+    const res = await fetch(localUrl, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data?.list || []);
+    }
+  } catch(e) {
+    console.warn('[loadJSON] local failed', e.message);
+  }
+
+  // Raw GitHub remains a fallback while a new deployment is still propagating.
   const repoPath = path.replace(/^\//, '');
   const rawUrl = `https://raw.githubusercontent.com/zws875-star/studio/main/${repoPath}?t=${timestamp}`;
 
@@ -22,22 +34,18 @@ async function loadJSON(path) {
     console.warn('[loadJSON] raw failed', e.message);
   }
 
-  // Fallback to current origin
-  const localUrl = path.includes('?') ? `${path}&t=${timestamp}` : `${path}?t=${timestamp}`;
-  try {
-    const res = await fetch(localUrl, { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      const result = Array.isArray(data) ? data : (data?.list || []);
-      console.log('[loadJSON] success from local', result.length, 'items');
-      return result;
-    }
-  } catch(e) {
-    console.warn('[loadJSON] local failed', e.message);
-  }
-
   console.warn('[loadJSON] all failed for', path);
   return [];
+}
+
+function assetUrl(value) {
+  if (!value) return '';
+  const match = value.match(/^https:\/\/raw\.githubusercontent\.com\/zws875-star\/studio\/main\/(.+)$/i);
+  return match ? '/' + match[1] : value;
+}
+
+function videoUrl(item) {
+  return assetUrl(item?.actionUrl || item?.mediaUrl || item?.embed || item?.url || '');
 }
 
 // ─── Dark Mode ──────────────────────────────────────────────
@@ -167,6 +175,7 @@ function makePhotosClickable(containerSelector) {
 // ─── Video Modal ────────────────────────────────────────────
 
 function openVideoModal(embedUrl, title = '') {
+  embedUrl = assetUrl(embedUrl);
   const existing = document.querySelector('.video-modal');
   if (existing) existing.remove();
 
@@ -279,5 +288,7 @@ window.ZWS = {
   openLightbox,
   openVideoModal,
   makePhotosClickable,
-  loadJSON
+  loadJSON,
+  assetUrl,
+  videoUrl
 };

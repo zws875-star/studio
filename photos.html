@@ -124,7 +124,7 @@
       grid.classList.remove('loading');
       grid.innerHTML = '';
 
-      const toShow = photos.slice(0, count);
+      const toShow = photos.filter(photo => photo.published !== false).slice(0, count);
 
       if (!toShow.length) {
         grid.innerHTML = '<div class="col-span-full text-center py-16 text-[#888888]">暂无照片</div>';
@@ -134,16 +134,17 @@
       toShow.forEach((photo, index) => {
         const div = document.createElement('div');
         div.className = 'photo-item';
-        div.dataset.url = photo.url;
+        const photoUrl = ZWS.assetUrl(photo.url || photo.mediaUrl);
+        div.dataset.url = photoUrl;
         div.innerHTML = `
-          <img src="${photo.url}" alt="${photo.caption}">
+          <img src="${photoUrl}" alt="${photo.caption}">
           <div class="photo-caption">
             <div class="font-medium">${photo.caption}</div>
             <div class="text-xs opacity-75 mt-0.5">${photo.date}</div>
           </div>
         `;
         div.onclick = () => {
-          const allUrls = toShow.map(p => p.url);
+          const allUrls = toShow.map(p => ZWS.assetUrl(p.url || p.mediaUrl));
           ZWS.openLightbox(allUrls, index);
         };
         grid.appendChild(div);

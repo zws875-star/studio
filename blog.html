@@ -99,7 +99,7 @@
       document.getElementById('single-post').style.display = 'none';
       container.innerHTML = '';
 
-      posts.forEach((post, index) => {
+      posts.filter(post => post.published !== false).forEach((post, index) => {
         const article = document.createElement('article');
         article.className = 'reveal';
         article.style.transitionDelay = (index * 80) + 'ms';
@@ -120,7 +120,7 @@
     }
 
     function showSinglePost(id) {
-      const post = posts.find(p => p.id === id);
+      const post = posts.find(p => p.id === id && p.published !== false);
       if (!post) {
         showAllPosts();
         return;

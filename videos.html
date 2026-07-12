@@ -67,17 +67,18 @@
       const grid = document.getElementById('video-grid');
       grid.innerHTML = '';
 
-      if (!videos.length) {
+      const publishedVideos = videos.filter(video => video.published !== false);
+      if (!publishedVideos.length) {
         grid.innerHTML = '<div class="col-span-full text-center py-16 text-[#888888]">暂无视频</div>';
         return;
       }
 
-      videos.forEach(video => {
+      publishedVideos.forEach(video => {
         const card = document.createElement('div');
         card.className = 'group cursor-pointer reveal';
         card.innerHTML = `
           <div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded-xl overflow-hidden mb-4">
-            ${video.thumbnail ? `<img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="${video.title}" loading="lazy">` : ''}
+            ${video.thumbnail ? `<img src="${ZWS.assetUrl(video.thumbnail)}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="${video.title}" loading="lazy">` : ''}
             <div class="absolute inset-0 flex items-center justify-center">
               <div class="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110">
                 <div class="w-0 h-0 border-l-[18px] border-l-black border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent ml-1"></div>
@@ -91,7 +92,7 @@
         `;
 
         card.onclick = () => {
-          ZWS.openVideoModal(video.embed, video.title);
+          ZWS.openVideoModal(ZWS.videoUrl(video), video.title);
         };
 
         grid.appendChild(card);
