@@ -183,13 +183,36 @@ function toBase64(str) {
 }
 
 async function saveFile(path, content, sha, message) {
-  const jsonStr = JSON.stringify(content, null, 2);
-  const encoded = toBase64(jsonStr);
-  return gh('PUT', `/repos/${REPO}/contents/${path}`, {
-    message: message || `Update ${path}`,
-    content: encoded,
-    sha, branch: BRANCH,
-  });
+  // Try saving; if SHA conflict (409), re-fetch latest SHA and retry once
+  let currentSha = sha;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const jsonStr = JSON.stringify(content, null, 2);
+      const encoded = toBase64(jsonStr);
+      await gh('PUT', `/repos/${REPO}/contents/${path}`, {
+        message: message || `Update ${path}`,
+        content: encoded,
+        sha: currentSha,
+        branch: BRANCH,
+      });
+      return; // success
+    } catch (e) {
+      if (attempt === 1 || !e.message.startsWith('GitHub API 409')) {
+        // Re-fetch latest sha and retry
+        try {
+          const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
+          currentSha = fresh.sha;
+          // Update sha cache so next save won't conflict again
+          const type = Object.entries({photos:'data/photos.json',videos:'data/videos.json',posts:'data/posts.json'}).find(([,p]) => p === path)?.[0];
+          if (type) shaCache[type] = fresh.sha;
+          continue; // retry with fresh sha
+        } catch (fetchError) {
+          throw fetchError;
+        }
+      }
+      throw e; // non-conflict or retry exhausted
+    }
+  }
 }
 
 // ─── File Upload to GitHub ──────────────────────────
@@ -198,11 +221,13 @@ async function uploadFile(localFile, repoPath) {
   // Read file as base64
   const b64 = await new Promise((resolve, reject) => {
     const reader = new FileReader();
+    const rTimeout = setTimeout(() => { reader.abort?.(); reject(new Error('读取文件超时')); }, 15000);
     reader.onload = () => {
+      clearTimeout(rTimeout);
       const base64 = reader.result.split(',')[1];
       resolve(base64);
     };
-    reader.onerror = reject;
+    reader.onerror = () => { clearTimeout(rTimeout); reject(new Error('读取文件失败')); };
     reader.readAsDataURL(localFile);
   });
 
@@ -213,7 +238,7 @@ async function uploadFile(localFile, repoPath) {
     existingSha = existing.sha;
   } catch(e) { /* new file, that's fine */ }
 
-  // Upload via GitHub API
+  // Upload via GitHub API (no sha to avoid 409 on existing file from another session)
   await gh('PUT', `/repos/${REPO}/contents/${repoPath}`, {
     message: `Upload ${localFile.name}`,
     content: b64,
@@ -221,7 +246,8 @@ async function uploadFile(localFile, repoPath) {
     branch: BRANCH,
   });
 
-  return `${SITE_URL}/${repoPath}`;
+  // Use raw GitHub URL for reliable access (no DNS propagation dependency)
+  return `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${repoPath}`;
 }
 
 // ─── Data Loading ─────────────────────────────────
@@ -356,6 +382,10 @@ async function handleFile(file, area, fileInput, urlInput, resultInput, key) {
   // Validate type
   if (!file.type.startsWith('image/')) {
     toast('请选择图片文件', true); return;
+  }
+  // Limit file size to 10MB (GitHub API has a 25MB limit for raw content)
+  if (file.size > 10 * 1024 * 1024) {
+    toast('图片不能超过 10MB', true); return;
   }
 
   // Show uploading state
