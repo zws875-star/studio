@@ -5,9 +5,15 @@
 
 async function loadJSON(path) {
   const url = path.includes('?') ? `${path}&t=${Date.now()}` : `${path}?t=${Date.now()}`;
-  const res = await fetch(url, { cache: 'no-store' });
-  const data = await res.json();
-  return Array.isArray(data) ? data : (data?.list || []);
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data?.list || []);
+  } catch(e) {
+    console.warn('loadJSON failed for', path, e);
+    return [];
+  }
 }
 
 // ─── Dark Mode ──────────────────────────────────────────────
