@@ -245,32 +245,35 @@
       // Recent videos
       try {
         const allVideos = await ZWS.loadJSON('data/videos.json');
+        console.log('[debug] videos raw count:', allVideos.length);
         const recentVideos = allVideos.slice(0, 3);
         const grid = document.getElementById('recent-videos');
+        if (!grid) { console.warn('[debug] #recent-videos not found'); return; }
         grid.innerHTML = '';
         if (!recentVideos.length) {
           grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无视频</div>';
+        } else {
+          recentVideos.forEach((video, idx) => {
+            console.log('[debug] rendering video', idx, video.title);
+            const div = document.createElement('div');
+            div.className = 'group cursor-pointer reveal';
+            
+            const thumbImg = video.thumbnail 
+              ? `<img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="" loading="lazy">` 
+              : '';
+            
+            div.innerHTML = '<div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded overflow-hidden mb-3">'
+              + thumbImg
+              + '<div class="absolute inset-0 flex items-center justify-center"><div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110"><div class="w-0 h-0 border-l-[15px] border-l-black border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div></div></div></div>'
+              + '<div class="font-medium tracking-tight">' + escapeHtml(video.title) + '</div>'
+              + '<div class="text-sm text-[#666666] dark:text-[#aaaaaa] mt-1 line-clamp-2">' + escapeHtml(video.description) + '</div>';
+            
+            div.onclick = () => ZWS.openVideoModal(video.embed, video.title);
+            grid.appendChild(div);
+          });
         }
-        recentVideos.forEach(video => {
-          const div = document.createElement('div');
-          div.className = 'group cursor-pointer reveal';
-          div.innerHTML = `
-            <div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded overflow-hidden mb-3">
-              ${video.thumbnail ? `<img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="${escapeHtml(video.title)}" loading="lazy">` : ''}
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110">
-                  <div class="w-0 h-0 border-l-[15px] border-l-black border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div>
-                </div>
-              </div>
-            </div>
-            <div class="font-medium tracking-tight">${escapeHtml(video.title)}</div>
-            <div class="text-sm text-[#666666] dark:text-[#aaaaaa] mt-1 line-clamp-2">${escapeHtml(video.description)}</div>
-          `;
-          div.onclick = () => ZWS.openVideoModal(video.embed, video.title);
-          grid.appendChild(div);
-        });
       } catch(e) {
-        console.warn('Recent videos fallback', e);
+        console.error('Recent videos error:', e);
         const grid = document.getElementById('recent-videos');
         if (grid) grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无视频</div>';
       }
@@ -278,21 +281,40 @@
       // Recent posts
       try {
         const allPosts = await ZWS.loadJSON('data/posts.json');
+        console.log('[debug] posts raw count:', allPosts.length);
         const recent = allPosts.slice(0, 2);
         const container = document.getElementById('recent-posts');
+        if (!container) { console.warn('[debug] #recent-posts not found'); return; }
         container.innerHTML = '';
-        recent.forEach(post => {
-          const div = document.createElement('div');
-          div.className = 'reveal';
-          div.innerHTML = `
-            <div class="text-xs text-[#888888] dark:text-[#777777] mb-2">${post.date || post.dateDisplay}</div>
-            <a href="blog.html?post=${post.id}" class="block text-xl tracking-tight hover:underline">${post.title}</a>
-            <p class="text-[#666666] dark:text-[#aaaaaa] mt-3 text-sm line-clamp-2">${post.excerpt}</p>
-          `;
-          container.appendChild(div);
-        });
+        if (!recent.length) {
+          container.innerHTML = '<div class="text-[#888888]">暂无文章</div>';
+        } else {
+          recent.forEach((post, idx) => {
+            console.log('[debug] rendering post', idx, post.title);
+            const div = document.createElement('div');
+            div.className = 'reveal';
+            
+            const dateEl = document.createElement('div');
+            dateEl.className = 'text-xs text-[#888888] dark:text-[#777777] mb-2';
+            dateEl.textContent = post.date || post.dateDisplay || '';
+            div.appendChild(dateEl);
+            
+            const link = document.createElement('a');
+            link.href = 'blog.html?post=' + post.id;
+            link.className = 'block text-xl tracking-tight hover:underline';
+            link.textContent = post.title || '';
+            div.appendChild(link);
+            
+            const p = document.createElement('p');
+            p.className = 'text-[#666666] dark:text-[#aaaaaa] mt-3 text-sm line-clamp-2';
+            p.textContent = post.excerpt || '';
+            div.appendChild(p);
+            
+            container.appendChild(div);
+          });
+        }
       } catch(e) {
-        console.warn('Recent posts fallback', e);
+        console.error('Recent posts error:', e);
         const container = document.getElementById('recent-posts');
         if (container) container.innerHTML = '<div class="text-[#888888]">暂无文章</div>';
       }
