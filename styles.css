@@ -61,15 +61,17 @@ footer {
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   color: var(--text) !important;
   text-decoration: none;
   white-space: nowrap;
+  font-family: Arial, sans-serif;
+  line-height: 1;
 }
 
 .brand-mark {
-  width: 56px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -83,55 +85,54 @@ footer {
   overflow: visible;
 }
 
-.brand-frame {
+.brand-mark path {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.04);
-  stroke-width: 1.5;
-}
-
-.brand-grey {
-  fill: none;
-  stroke: #9a9a9a;
-  stroke-width: 4;
   stroke-linecap: square;
   stroke-linejoin: miter;
-  opacity: 0.92;
+  transition: transform 0.35s ease, stroke 0.35s ease;
 }
 
-.brand-grey.shadow {
-  stroke: #6f6f6f;
-  opacity: 0.46;
-  transform: translate(1px, 1px);
+.mark-zs {
+  stroke: #ff6a2a;
+  stroke-width: 4px;
 }
 
-.brand-orange {
-  fill: none;
-  stroke: #ff6d1b;
-  stroke-width: 4.5;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
+.mark-w {
+  stroke: #888888;
+  stroke-width: 2px;
+  opacity: 0.9;
+}
+
+.site-brand:hover .mark-zs {
+  transform: translateX(2px);
+}
+
+.site-brand:hover .mark-w {
+  stroke: #ff6a2a;
+  transform: translateX(-2px);
 }
 
 .brand-copy {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: end;
+  column-gap: 4px;
 }
 
 .brand-word {
-  font-family: "Inter", sans-serif;
-  font-size: 1.95rem;
-  font-weight: 700;
-  letter-spacing: -0.12em;
-  color: #7f7f7f !important;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #888888 !important;
 }
 
 .brand-num {
-  font-family: "Inter", sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0.35em;
-  color: #ff7a1a !important;
+  padding-bottom: 1px;
+  font-size: 7px;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0.16em;
+  color: #ff6a2a !important;
 }
 
 /* Transitions for dark mode */
