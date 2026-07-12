@@ -192,12 +192,19 @@ function toBase64(str) {
 }
 
 async function saveFile(path, content, sha, message) {
-  // Write flat array (content.list || content) for front-end compatibility
   const saveData = content && content.list ? content.list : content;
-  
-  // Try saving; if SHA conflict (409), re-fetch latest SHA and retry once
-  let currentSha = sha;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  const jsonStr = JSON.stringify(saveData, null, 2);
+  const encoded = toBase64(jsonStr);
+
+  await gh('PUT', `/repos/${REPO}/contents/${path}`, {
+    message: message || `Update ${path}`,
+    content: encoded,
+    sha,
+    branch: BRANCH,
+  });
+}
+
+// [旧的 saveFile 重试逻辑已删除] async function saveFileOld(path, content, sha, message) {
     try {
       const jsonStr = JSON.stringify(saveData, null, 2);
       const encoded = toBase64(jsonStr);
