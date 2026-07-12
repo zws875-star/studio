@@ -214,22 +214,32 @@
         const allPhotos = await ZWS.loadJSON('data/photos.json');
         const featured = allPhotos.slice(0, 3);
         const grid = document.getElementById('featured-works');
+        if (!grid) return;
+
         grid.innerHTML = '';
+
         if (!featured.length) {
           grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无照片</div>';
+          return;
         }
+
         featured.forEach((photo, i) => {
           const div = document.createElement('div');
           div.className = 'aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden cursor-pointer work-card reveal';
           div.style.transitionDelay = (i * 100) + 'ms';
-          div.innerHTML = `<img src="${photo.url}" class="w-full h-full object-cover" alt="${escapeHtml(photo.caption)}" loading="lazy">`;
+          const img = document.createElement('img');
+          img.src = photo.url || '';
+          img.className = 'w-full h-full object-cover';
+          img.alt = escapeHtml(photo.caption || '');
+          img.loading = 'lazy';
+          div.appendChild(img);
           div.onclick = () => window.location.href = 'photos.html';
           grid.appendChild(div);
         });
       } catch(e) {
-        console.warn('Featured works fallback', e);
+        console.error('Featured works error', e);
         const grid = document.getElementById('featured-works');
-        if (grid) grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无照片</div>';
+        if (grid) grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">加载失败</div>';
       }
 
       // Recent videos
