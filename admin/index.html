@@ -651,7 +651,11 @@ async function saveItem(type, index) {
     loadData(type);
   } catch(e) {
     console.error('Save error:', e);
-    toast('❌ 保存失败: ' + e.message, true);
+    let msg = e.message;
+    if (msg.includes('409')) msg = 'SHA冲突，已自动重试失败。请刷新页面重试';
+    if (msg.includes('401') || msg.includes('403')) msg = 'GitHub Token无效或权限不足。请重新登录';
+    if (msg.includes('timeout') || msg.includes('超时')) msg = '保存超时（可能是网络问题或 Token 过期）';
+    toast('❌ ' + msg, true);
     btn.disabled = false; 
     btn.textContent = '保存';
   }
