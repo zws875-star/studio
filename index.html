@@ -269,7 +269,7 @@
       for (var i = 0; i < slice.length; i++) {
         var v = slice[i];
         var d = document.createElement('div');
-        d.className = 'group cursor-pointer reveal';
+        d.className = 'group cursor-pointer reveal revealed';
         var html = '<div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded overflow-hidden mb-3">';
         if (v.thumbnail) {
           html += '<img src="' + v.thumbnail.replace(/"/g, '') + '" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="" loading="lazy">';
@@ -300,7 +300,7 @@
       for (var i = 0; i < slice.length; i++) {
         var post = slice[i];
         var d = document.createElement('div');
-        d.className = 'reveal';
+        d.className = 'reveal revealed';
         var de = document.createElement('div');
         de.className = 'text-xs text-[#888] dark:text-[#777] mb-2';
         de.textContent = post.date || post.dateDisplay || '';

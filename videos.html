@@ -74,7 +74,7 @@
 
       videos.forEach(video => {
         const card = document.createElement('div');
-        card.className = 'group cursor-pointer reveal';
+        card.className = 'group cursor-pointer reveal revealed';
         card.innerHTML = `
           <div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded-xl overflow-hidden mb-4">
             ${video.thumbnail ? `<img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="${video.title}" loading="lazy">` : ''}

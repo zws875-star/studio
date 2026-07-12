@@ -101,7 +101,7 @@
 
       posts.forEach((post, index) => {
         const article = document.createElement('article');
-        article.className = 'reveal';
+        article.className = 'reveal revealed';
         article.style.transitionDelay = (index * 80) + 'ms';
         article.innerHTML = `
           <div class="text-xs text-[#888888] dark:text-[#777777] mb-2">${post.dateDisplay}</div>
@@ -131,7 +131,7 @@
       container.style.display = 'block';
 
       container.innerHTML = `
-        <div class="reveal">
+        <div class="reveal revealed">
           <a href="blog.html" class="inline-flex items-center text-sm text-[#888888] dark:text-[#777777] hover:text-black dark:hover:text-white mb-8 transition-colors">
             &larr; 返回所有文章
           </a>
