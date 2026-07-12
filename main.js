@@ -80,47 +80,8 @@ function videoUrl(item) {
 // ─── Dark Mode ──────────────────────────────────────────────
 
 function initDarkMode() {
-  const saved = localStorage.getItem('zws-theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
-  if (saved === 'dark' || (!saved && prefersDark)) {
-    document.documentElement.classList.add('dark');
-  }
-
-  // Create toggle button and inject it
-  const nav = document.querySelector('nav .flex.items-center.gap-x-9');
-  if (!nav) return;
-
-  const toggle = document.createElement('button');
-  toggle.id = 'dark-toggle';
-  toggle.className = 'text-sm text-[#555555] hover:text-black dark:text-[#aaaaaa] dark:hover:text-white transition-colors outline-none';
-  toggle.setAttribute('aria-label', '切换暗黑模式');
-  toggle.innerHTML = document.documentElement.classList.contains('dark')
-    ? '<span class="text-base leading-none">☀️</span>'
-    : '<span class="text-base leading-none">🌙</span>';
-
-  toggle.onclick = () => {
-    const isDark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('zws-theme', isDark ? 'dark' : 'light');
-    toggle.innerHTML = isDark
-      ? '<span class="text-base leading-none">☀️</span>'
-      : '<span class="text-base leading-none">🌙</span>';
-  };
-
-  nav.appendChild(toggle);
-
-  // Listen for system preference changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (!localStorage.getItem('zws-theme')) {
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-        toggle.innerHTML = '<span class="text-base leading-none">☀️</span>';
-      } else {
-        document.documentElement.classList.remove('dark');
-        toggle.innerHTML = '<span class="text-base leading-none">🌙</span>';
-      }
-    }
-  });
+  document.documentElement.classList.add('dark');
+  localStorage.setItem('zws-theme', 'dark');
 }
 
 // ─── Lightbox ──────────────────────────────────────────────
