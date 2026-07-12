@@ -236,8 +236,8 @@ async function uploadFile(localFile, repoPath) {
     branch: BRANCH,
   });
 
-  // Use raw GitHub URL for reliable access (no DNS propagation dependency)
-  return `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${repoPath}`;
+  // Keep uploaded assets on the site's own origin instead of depending on Raw GitHub.
+  return `/${repoPath}?v=${Date.now()}`;
 }
 
 // ─── Data Loading ─────────────────────────────────
@@ -658,6 +658,13 @@ function collectFormData(type, modal) {
   return obj;
 }
 
+function validateItem(type, obj) {
+  if (type === 'photos' && (!obj.caption || !(obj.url || obj.mediaUrl))) return '照片必须包含标题和图片';
+  if (type === 'videos' && (!obj.title || !(obj.actionUrl || obj.mediaUrl || obj.embed))) return '视频必须包含标题和视频文件或链接';
+  if (type === 'posts' && (!obj.title || !obj.excerpt || !Array.isArray(obj.content) || !obj.content.length)) return '博客必须包含标题、摘要和正文';
+  return '';
+}
+
 async function saveItem(type, index) {
   const modal = document.querySelector('.modal-overlay.active');
   const data = dataCache[type];
@@ -676,7 +683,15 @@ async function saveItem(type, index) {
     if (obj.embed.includes('vimeo.com')) obj.type = 'vimeo';
     else if (obj.embed.includes('youtube.com') || obj.embed.includes('youtu.be')) obj.type = 'youtube';
     else obj.type = 'local';
+    obj.actionUrl = obj.embed;
   }
+
+  if (type === 'posts' && index < 0) obj.id = Date.now();
+  obj.published = true;
+  obj.kind = type === 'photos' ? 'photo' : type === 'videos' ? 'video' : 'post';
+
+  const validationError = validateItem(type, obj);
+  if (validationError) { toast(validationError, true); return; }
 
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = '保存中...';
@@ -700,7 +715,13 @@ async function saveItem(type, index) {
     await Promise.race([savePromise, timeoutPromise]);
     const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
     shaCache[type] = fresh.sha;
-    toast('✅ 已保存');
+    const savedData = JSON.parse(fromBase64(fresh.content));
+    const savedList = Array.isArray(savedData) ? savedData : (savedData.list || []);
+    const savedItem = index >= 0 ? savedList[index] : savedList[0];
+    if (validateItem(type, savedItem || {}) || savedItem.published !== true || savedItem.kind !== obj.kind) {
+      throw new Error('保存后的内容校验失败，请重试');
+    }
+    toast('✅ 已保存并公开');
     modal.remove();
     renderList(type, data);
   } catch(e) {
