@@ -639,13 +639,21 @@ async function saveItem(type, index) {
   const path = files[type];
 
   try {
-    await saveFile(path, data, shaCache[type], index >= 0 ? `Edit ${type}` : `Add ${type}`);
+    // Add explicit timeout to prevent permanent "保存中..." hang
+    const savePromise = saveFile(path, data, shaCache[type], index >= 0 ? `Edit ${type}` : `Add ${type}`);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('保存超时（45秒）')), 45000)
+    );
+    
+    await Promise.race([savePromise, timeoutPromise]);
     toast('✅ 已保存');
     modal.remove();
     loadData(type);
   } catch(e) {
+    console.error('Save error:', e);
     toast('❌ 保存失败: ' + e.message, true);
-    btn.disabled = false; btn.textContent = '保存';
+    btn.disabled = false; 
+    btn.textContent = '保存';
   }
 }
 
