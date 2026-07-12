@@ -56,6 +56,137 @@ footer {
   border-top-color: var(--border) !important;
 }
 
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text) !important;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-brand:hover {
+  color: var(--text) !important;
+}
+
+.brand-mark {
+  width: 56px;
+  height: 40px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+}
+
+.brand-mark svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.brand-mark .brand-frame {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.04);
+  stroke-width: 1.5;
+}
+
+.brand-mark .brand-grey {
+  fill: none;
+  stroke: #9a9a9a;
+  stroke-width: 4;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  opacity: 0.92;
+}
+
+.brand-mark .brand-grey.shadow {
+  stroke: #6f6f6f;
+  opacity: 0.46;
+  transform: translate(1px, 1px);
+}
+
+.brand-mark .brand-orange {
+  fill: none;
+  stroke: #ff6d1b;
+  stroke-width: 4.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.brand-copy {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  letter-spacing: 0;
+}
+
+.brand-word {
+  font-size: 1.95rem;
+  font-weight: 700;
+  letter-spacing: -0.12em;
+  color: #7f7f7f !important;
+}
+
+.brand-num {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  color: #ff7a1a !important;
+  position: relative;
+  top: 1px;
+  animation: brandPulse 6.4s ease-in-out infinite;
+}
+
+.site-brand:hover .brand-mark {
+  animation: brandTilt 6.4s ease-in-out infinite;
+}
+
+.site-brand:hover .brand-word {
+  animation: brandBreath 6.4s ease-in-out infinite;
+}
+
+.site-brand:hover .brand-orange {
+  animation: brandSlide 6.4s ease-in-out infinite;
+}
+
+@keyframes brandTilt {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  18% { transform: translateY(-1px) rotate(-1.4deg); }
+  38% { transform: translateY(0.5px) rotate(1deg); }
+  58% { transform: translateY(-0.5px) rotate(-0.6deg); }
+  78% { transform: translateY(0) rotate(0.5deg); }
+}
+
+@keyframes brandBreath {
+  0%, 100% { transform: translateX(0) skewX(0deg); }
+  20% { transform: translateX(0.5px) skewX(-2deg); }
+  45% { transform: translateX(0) skewX(1deg); }
+  70% { transform: translateX(-0.4px) skewX(-1deg); }
+}
+
+@keyframes brandSlide {
+  0%, 100% { transform: translate(0, 0); }
+  24% { transform: translate(0.6px, -0.4px); }
+  49% { transform: translate(-0.4px, 0.3px); }
+  72% { transform: translate(0.3px, -0.2px); }
+}
+
+@keyframes brandPulse {
+  0%, 100% { transform: translateY(0); letter-spacing: 0.35em; }
+  32% { transform: translateY(-0.5px); letter-spacing: 0.42em; }
+  64% { transform: translateY(0.3px); letter-spacing: 0.38em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark,
+  .brand-word,
+  .brand-num,
+  .brand-mark .brand-orange {
+    animation: none !important;
+  }
+}
+
 /* Transitions for dark mode */
 * {
   transition-property: background-color, border-color, color;
