@@ -3,29 +3,29 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Noto+Sans+SC:wght@300;400;500;600&family=Noto+Serif+SC:wght@500;600;700&display=swap");
 
 :root {
-  --bg: #0d0d0d;
-  --bg-elevated: #141412;
-  --bg-nav: rgba(13, 13, 13, 0.88);
-  --text: #f2eee7;
-  --text-muted: #aaa49a;
-  --text-faint: #6f6b64;
-  --border: rgba(255, 106, 42, 0.22);
-  --card-bg: #141412;
-  --glass-bg: rgba(255, 106, 42, 0.08);
+  --bg: #0d0e10;
+  --bg-elevated: #141517;
+  --bg-nav: rgba(13, 14, 16, 0.9);
+  --text: #f7f7f4;
+  --text-muted: #bebfbd;
+  --text-faint: #7c7d7b;
+  --border: rgba(200, 185, 166, 0.15);
+  --card-bg: #141517;
+  --glass-bg: rgba(255, 255, 255, 0.045);
   --gold: #ff6a2a;
-  --gold-soft: #c9874d;
+  --gold-soft: #b79a7d;
 }
 
 .dark {
-  --bg: #0d0d0d;
-  --bg-elevated: #141412;
-  --bg-nav: rgba(13, 13, 13, 0.88);
-  --text: #f2eee7;
-  --text-muted: #aaa49a;
-  --text-faint: #6f6b64;
-  --border: rgba(255, 106, 42, 0.22);
-  --card-bg: #141412;
-  --glass-bg: rgba(255, 106, 42, 0.08);
+  --bg: #0d0e10;
+  --bg-elevated: #141517;
+  --bg-nav: rgba(13, 14, 16, 0.9);
+  --text: #f7f7f4;
+  --text-muted: #bebfbd;
+  --text-faint: #7c7d7b;
+  --border: rgba(200, 185, 166, 0.15);
+  --card-bg: #141517;
+  --glass-bg: rgba(255, 255, 255, 0.045);
 }
 
 body {
@@ -383,15 +383,16 @@ img.fade-in.loaded {
 
 /* Black-gold editorial identity */
 html {
-  background: #0d0d0d;
+  background: #0d0e10;
   color-scheme: dark;
 }
 
 body {
   min-height: 100vh;
+  color: #f7f7f4 !important;
   background:
-    radial-gradient(circle at 82% 12%, rgba(255, 106, 42, 0.055), transparent 28rem),
-    linear-gradient(180deg, #0d0d0d 0%, #10100f 48%, #0b0b0b 100%) !important;
+    radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.018), transparent 28rem),
+    linear-gradient(180deg, #0d0e10 0%, #101113 48%, #0b0c0e 100%) !important;
 }
 
 h1,
@@ -399,7 +400,7 @@ h2,
 .section-title {
   font-family: "Noto Serif SC", serif;
   font-weight: 600 !important;
-  color: #f2eee7 !important;
+  color: #f7f7f4 !important;
 }
 
 nav {
@@ -419,18 +420,18 @@ nav .max-w-6xl::after {
   right: 2rem;
   bottom: -1px;
   height: 1px;
-  background: linear-gradient(90deg, var(--gold), rgba(255, 106, 42, 0.1) 34%, transparent 76%);
+  background: linear-gradient(90deg, var(--gold), rgba(183, 154, 125, 0.11) 30%, transparent 72%);
 }
 
 a.nav-link,
 nav a {
-  color: #a9a39a !important;
+  color: #b9bab8 !important;
 }
 
 a.nav-link:hover,
 a.nav-link.font-medium,
 nav a.text-black {
-  color: #f5efe6 !important;
+  color: #ffffff !important;
 }
 
 .nav-link::after {
@@ -443,12 +444,12 @@ nav a.text-black {
   min-height: 600px;
   margin-top: 7rem;
   margin-bottom: 7rem;
-  border: 1px solid rgba(255, 106, 42, 0.3);
+  border: 1px solid rgba(200, 185, 166, 0.2);
   border-radius: 3px;
   overflow: hidden;
   background-image:
-    linear-gradient(90deg, rgba(5, 5, 5, 0.96) 0%, rgba(5, 5, 5, 0.82) 38%, rgba(5, 5, 5, 0.18) 72%, rgba(5, 5, 5, 0.08) 100%),
-    linear-gradient(0deg, rgba(5, 5, 5, 0.62), transparent 45%),
+    linear-gradient(90deg, rgba(5, 6, 8, 0.97) 0%, rgba(5, 6, 8, 0.86) 38%, rgba(5, 6, 8, 0.3) 72%, rgba(5, 6, 8, 0.18) 100%),
+    linear-gradient(0deg, rgba(5, 6, 8, 0.72), rgba(5, 6, 8, 0.08) 52%),
     url("assets/images/hero-golden-summit.jpg");
   background-position: center;
   background-size: cover;
@@ -460,7 +461,7 @@ nav a.text-black {
   position: absolute;
   z-index: -1;
   inset: 0;
-  background: linear-gradient(115deg, transparent 53%, rgba(255, 106, 42, 0.08) 100%);
+  background: linear-gradient(115deg, transparent 53%, rgba(7, 9, 12, 0.22) 100%);
   pointer-events: none;
 }
 
@@ -489,8 +490,8 @@ nav a.text-black {
 }
 
 .hero-shell p {
-  color: #c2bcb2 !important;
-  font-weight: 300;
+  color: #eeeeeb !important;
+  font-weight: 400;
 }
 
 .hero-shell .w-2.h-2 {
@@ -499,12 +500,12 @@ nav a.text-black {
 }
 
 .hero-shell .tracking-\[3px\] {
-  color: #c9874d !important;
+  color: var(--gold-soft) !important;
 }
 
 .minimal-button {
   border-color: rgba(255, 106, 42, 0.72) !important;
-  color: #f5efe6 !important;
+  color: #f7f7f4 !important;
   background: rgba(10, 10, 10, 0.34);
   letter-spacing: 0.08em;
 }
@@ -563,8 +564,8 @@ body > .max-w-3xl::before {
 .photo-item,
 #recent-videos > div > div:first-child,
 #video-grid > div > div:first-child {
-  border: 1px solid rgba(255, 106, 42, 0.15);
-  background: #151513 !important;
+  border: 1px solid rgba(200, 185, 166, 0.12);
+  background: #151619 !important;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
 }
 
@@ -587,7 +588,7 @@ body > .max-w-3xl::before {
 #blog-list article {
   position: relative;
   padding: 1.75rem 0 1.75rem 1.5rem;
-  border-left: 1px solid rgba(255, 106, 42, 0.34);
+  border-left: 1px solid rgba(200, 185, 166, 0.22);
 }
 
 #recent-posts > div::before,
@@ -607,6 +608,15 @@ body > .max-w-3xl::before {
 #single-post a:hover,
 footer a:hover {
   color: var(--gold) !important;
+}
+
+#recent-posts a,
+#blog-list h2 a,
+#single-post h2,
+#recent-videos .font-medium,
+#video-grid .font-medium,
+.photo-caption .font-medium {
+  color: #f7f7f4 !important;
 }
 
 footer {
