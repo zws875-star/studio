@@ -141,11 +141,7 @@
     </div>
 
     <!-- Featured Photos Grid (populated from data) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="featured-works">
-      <div class="aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
-      <div class="aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
-      <div class="aspect-[16/10] bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="featured-works"></div>
   </div>
 
   <!-- Recent Videos -->
@@ -160,11 +156,7 @@
       </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="recent-videos">
-      <div class="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
-      <div class="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
-      <div class="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden animate-pulse"></div>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="recent-videos"></div>
   </div>
 
   <!-- Recent Blog -->
@@ -179,18 +171,7 @@
       </a>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-8" id="recent-posts">
-      <div class="animate-pulse">
-        <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24 mb-3"></div>
-        <div class="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4 mb-2"></div>
-        <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-full"></div>
-      </div>
-      <div class="animate-pulse">
-        <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24 mb-3"></div>
-        <div class="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4 mb-2"></div>
-        <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-full"></div>
-      </div>
-    </div>
+    <div class="grid md:grid-cols-2 gap-8" id="recent-posts"></div>
   </div>
 
   <footer class="border-t border-[#E5E2D9] dark:border-[#333] py-8 text-xs text-[#888888] dark:text-[#777777]">
@@ -202,125 +183,108 @@
 
   <script src="main.js"></script>
   <script>
-    async function initHome() {
-      const escapeHtml = (s) => {
-        const d = document.createElement('div');
+    (async function initHome() {
+      // Helper
+      function esc(s) {
+        var d = document.createElement('div');
         d.textContent = s || '';
         return d.innerHTML;
-      };
-
-      // Featured works
-      try {
-        const allPhotos = await ZWS.loadJSON('data/photos.json');
-        const featured = allPhotos.slice(0, 3);
-        const grid = document.getElementById('featured-works');
-        if (!grid) return;
-
-        grid.innerHTML = '';
-
-        if (!featured.length) {
-          grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无照片</div>';
-          return;
-        }
-
-        featured.forEach((photo, i) => {
-          const div = document.createElement('div');
-          div.style.cssText = 'aspect-ratio:16/10;background:#f1f1f1;border-radius:8px;overflow:hidden;cursor:pointer;';
-          const img = document.createElement('img');
-          img.src = photo.url || '';
-          img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-          img.alt = escapeHtml(photo.caption || '');
-          img.loading = 'lazy';
-          img.onerror = () => { img.style.display = 'none'; };
-          div.appendChild(img);
-          div.onclick = () => window.location.href = 'photos.html';
-          grid.appendChild(div);
-        });
-      } catch(e) {
-        console.error('Featured works error', e);
-        const grid = document.getElementById('featured-works');
-        if (grid) grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">加载失败</div>';
       }
 
-      // Recent videos
+      // 1) Featured works
       try {
-        const allVideos = await ZWS.loadJSON('data/videos.json');
-        console.log('[debug] videos raw count:', allVideos.length);
-        const recentVideos = allVideos.slice(0, 3);
-        const grid = document.getElementById('recent-videos');
-        if (!grid) { console.warn('[debug] #recent-videos not found'); return; }
-        grid.innerHTML = '';
-        if (!recentVideos.length) {
-          grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无视频</div>';
-        } else {
-          recentVideos.forEach((video, idx) => {
-            console.log('[debug] rendering video', idx, video.title);
-            const div = document.createElement('div');
-            div.className = 'group cursor-pointer reveal';
-            
-            const thumbImg = video.thumbnail 
-              ? `<img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="" loading="lazy">` 
-              : '';
-            
-            div.innerHTML = '<div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded overflow-hidden mb-3">'
-              + thumbImg
-              + '<div class="absolute inset-0 flex items-center justify-center"><div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110"><div class="w-0 h-0 border-l-[15px] border-l-black border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div></div></div></div>'
-              + '<div class="font-medium tracking-tight">' + escapeHtml(video.title) + '</div>'
-              + '<div class="text-sm text-[#666666] dark:text-[#aaaaaa] mt-1 line-clamp-2">' + escapeHtml(video.description) + '</div>';
-            
-            div.onclick = () => ZWS.openVideoModal(video.embed, video.title);
-            grid.appendChild(div);
-          });
+        var items = await ZWS.loadJSON('data/photos.json');
+        var g = document.getElementById('featured-works');
+        if (g) {
+          g.innerHTML = '';
+          var slice = items.slice(0, 3);
+          if (slice.length === 0) {
+            g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无照片</div>';
+          } else {
+            for (var i = 0; i < slice.length; i++) {
+              (function(photo) {
+                var d = document.createElement('div');
+                d.style.cssText = 'aspect-ratio:16/10;background:#f1f1f1;border-radius:8px;overflow:hidden;cursor:pointer;';
+                var img = document.createElement('img');
+                img.src = photo.url || '';
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+                img.alt = esc(photo.caption || '');
+                img.loading = 'lazy';
+                img.onerror = function() { this.style.display = 'none'; };
+                d.appendChild(img);
+                d.onclick = function() { window.location.href = 'photos.html'; };
+                g.appendChild(d);
+              })(slice[i]);
+            }
+          }
         }
-      } catch(e) {
-        console.error('Recent videos error:', e);
-        const grid = document.getElementById('recent-videos');
-        if (grid) grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无视频</div>';
-      }
+      } catch(e) { console.error('photos err', e); }
 
-      // Recent posts
+      // 2) Recent videos
       try {
-        const allPosts = await ZWS.loadJSON('data/posts.json');
-        console.log('[debug] posts raw count:', allPosts.length);
-        const recent = allPosts.slice(0, 2);
-        const container = document.getElementById('recent-posts');
-        if (!container) { console.warn('[debug] #recent-posts not found'); return; }
-        container.innerHTML = '';
-        if (!recent.length) {
-          container.innerHTML = '<div class="text-[#888888]">暂无文章</div>';
-        } else {
-          recent.forEach((post, idx) => {
-            console.log('[debug] rendering post', idx, post.title);
-            const div = document.createElement('div');
-            div.className = 'reveal';
-            
-            const dateEl = document.createElement('div');
-            dateEl.className = 'text-xs text-[#888888] dark:text-[#777777] mb-2';
-            dateEl.textContent = post.date || post.dateDisplay || '';
-            div.appendChild(dateEl);
-            
-            const link = document.createElement('a');
-            link.href = 'blog.html?post=' + post.id;
-            link.className = 'block text-xl tracking-tight hover:underline';
-            link.textContent = post.title || '';
-            div.appendChild(link);
-            
-            const p = document.createElement('p');
-            p.className = 'text-[#666666] dark:text-[#aaaaaa] mt-3 text-sm line-clamp-2';
-            p.textContent = post.excerpt || '';
-            div.appendChild(p);
-            
-            container.appendChild(div);
-          });
+        var items = await ZWS.loadJSON('data/videos.json');
+        var g = document.getElementById('recent-videos');
+        if (g) {
+          g.innerHTML = '';
+          var slice = items.slice(0, 3);
+          if (slice.length === 0) {
+            g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无视频</div>';
+          } else {
+            for (var i = 0; i < slice.length; i++) {
+              (function(video) {
+                var d = document.createElement('div');
+                d.className = 'group cursor-pointer reveal';
+                var thumb = video.thumbnail || '';
+                var html = '<div class="relative aspect-video bg-zinc-900 dark:bg-zinc-800 rounded overflow-hidden mb-3">';
+                if (thumb) {
+                  html += '<img src="' + thumb + '" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" alt="" loading="lazy">';
+                }
+                html += '<div class="absolute inset-0 flex items-center justify-center"><div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center transition-transform group-hover:scale-110"><div class="w-0 h-0 border-l-[15px] border-l-black border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div></div></div></div>';
+                html += '<div class="font-medium tracking-tight">' + esc(video.title) + '</div>';
+                html += '<div class="text-sm text-[#666666] dark:text-[#aaaaaa] mt-1 line-clamp-2">' + esc(video.description) + '</div>';
+                d.innerHTML = html;
+                d.onclick = function() { ZWS.openVideoModal(video.embed, video.title); };
+                g.appendChild(d);
+              })(slice[i]);
+            }
+          }
         }
-      } catch(e) {
-        console.error('Recent posts error:', e);
-        const container = document.getElementById('recent-posts');
-        if (container) container.innerHTML = '<div class="text-[#888888]">暂无文章</div>';
-      }
-    }
+      } catch(e) { console.error('videos err', e); }
 
-    initHome();
+      // 3) Recent posts
+      try {
+        var items = await ZWS.loadJSON('data/posts.json');
+        var g = document.getElementById('recent-posts');
+        if (g) {
+          g.innerHTML = '';
+          var slice = items.slice(0, 2);
+          if (slice.length === 0) {
+            g.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无文章</div>';
+          } else {
+            for (var i = 0; i < slice.length; i++) {
+              (function(post) {
+                var d = document.createElement('div');
+                d.className = 'reveal';
+                var de = document.createElement('div');
+                de.className = 'text-xs text-[#888888] dark:text-[#777777] mb-2';
+                de.textContent = post.date || post.dateDisplay || '';
+                d.appendChild(de);
+                var a = document.createElement('a');
+                a.href = 'blog.html?post=' + post.id;
+                a.className = 'block text-xl tracking-tight hover:underline';
+                a.textContent = post.title || '';
+                d.appendChild(a);
+                var pe = document.createElement('p');
+                pe.className = 'text-[#666666] dark:text-[#aaaaaa] mt-3 text-sm line-clamp-2';
+                pe.textContent = post.excerpt || '';
+                d.appendChild(pe);
+                g.appendChild(d);
+              })(slice[i]);
+            }
+          }
+        }
+      } catch(e) { console.error('posts err', e); }
+    })();
   </script>
 </body>
 </html>
