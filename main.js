@@ -4,16 +4,38 @@
 // ─── Data Loading ───────────────────────────────────────────
 
 async function loadJSON(path) {
-  const url = path.includes('?') ? `${path}&t=${Date.now()}` : `${path}?t=${Date.now()}`;
-  try {
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data?.list || []);
-  } catch(e) {
-    console.warn('loadJSON failed for', path, e);
-    return [];
+  const timestamp = Date.now();
+  const tryUrls = [];
+
+  // Primary: current origin (custom domain or GitHub Pages)
+  const primary = path.includes('?') 
+    ? `${path}&t=${timestamp}` 
+    : `${path}?t=${timestamp}`;
+  tryUrls.push(primary);
+
+  // Fallback: raw.githubusercontent.com (most reliable)
+  if (!path.startsWith('http')) {
+    const repoPath = path.replace(/^\//, '');
+    tryUrls.push(`https://raw.githubusercontent.com/zws875-star/studio/main/${repoPath}?t=${timestamp}`);
   }
+
+  for (const url of tryUrls) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const result = Array.isArray(data) ? data : (data?.list || []);
+      if (result.length > 0) {
+        console.log('[loadJSON] success from', url, result.length, 'items');
+        return result;
+      }
+    } catch(e) {
+      console.warn('[loadJSON] failed', url, e.message);
+    }
+  }
+
+  console.warn('[loadJSON] all sources failed for', path);
+  return [];
 }
 
 // ─── Dark Mode ──────────────────────────────────────────────
