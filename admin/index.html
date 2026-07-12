@@ -204,35 +204,6 @@ async function saveFile(path, content, sha, message) {
   });
 }
 
-// [旧的 saveFile 重试逻辑已删除] async function saveFileOld(path, content, sha, message) {
-    try {
-      const jsonStr = JSON.stringify(saveData, null, 2);
-      const encoded = toBase64(jsonStr);
-      const result = await gh('PUT', `/repos/${REPO}/contents/${path}`, {
-        message: message || `Update ${path}`,
-        content: encoded,
-        sha: currentSha,
-        branch: BRANCH,
-      });
-      return result; // success
-    } catch (e) {
-      if (attempt === 1 || !e.message.startsWith('GitHub API 409')) {
-        throw e;
-      }
-      // SHA conflict: re-fetch latest sha and retry once
-      try {
-        const fresh = await gh('GET', `/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
-        currentSha = fresh.sha;
-        // Update sha cache so next save won't conflict again
-        const type = Object.entries({photos:'data/photos.json',videos:'data/videos.json',posts:'data/posts.json'}).find(([,p]) => p === path)?.[0];
-        if (type) shaCache[type] = fresh.sha;
-        // continue loop to retry
-      } catch (fetchError) {
-        throw new Error('SHA冲突，自动重试时获取数据失败');
-      }
-    }
-  }
-}
 
 // ─── File Upload to GitHub ──────────────────────────
 
