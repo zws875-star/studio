@@ -44,6 +44,35 @@ function assetUrl(value) {
   return match ? '/' + match[1] : value;
 }
 
+function brandLogoMarkup(filterId) {
+  return `
+    <svg viewBox="0 0 64 48" role="presentation" focusable="false" aria-hidden="true">
+      <defs>
+        <filter id="${filterId}" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="1" seed="8" result="noise">
+            <animate attributeName="baseFrequency" dur="7s" values="0.012 0.05;0.018 0.07;0.012 0.05" repeatCount="indefinite"></animate>
+          </feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+        </filter>
+      </defs>
+      <rect class="brand-frame" x="8" y="6" width="48" height="36"></rect>
+      <g filter="url(#${filterId})">
+        <path class="brand-grey shadow" d="M16 12H40L20 31H48"></path>
+        <path class="brand-grey" d="M14 10H38L18 29H46"></path>
+        <path class="brand-orange" d="M12 10H42L16 32H52"></path>
+        <path class="brand-orange" d="M14 10L24 10"></path>
+        <path class="brand-orange" d="M16 32L52 32"></path>
+      </g>
+    </svg>
+  `;
+}
+
+function initBrandLogos() {
+  document.querySelectorAll('[data-brand-logo]').forEach((slot, index) => {
+    slot.innerHTML = brandLogoMarkup(`brand-distort-${index}`);
+  });
+}
+
 function videoUrl(item) {
   return assetUrl(item?.actionUrl || item?.mediaUrl || item?.embed || item?.url || '');
 }
@@ -268,6 +297,7 @@ function initSmoothImages() {
 // ─── Initialize ──────────────────────────────────────────────
 
 function initSite() {
+  initBrandLogos();
   initLightbox();
   initDarkMode();
   initPageTransition();
@@ -290,5 +320,6 @@ window.ZWS = {
   makePhotosClickable,
   loadJSON,
   assetUrl,
-  videoUrl
+  videoUrl,
+  brandLogoMarkup
 };
