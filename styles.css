@@ -35,6 +35,16 @@ nav, .bg-\\[\\#F9F7F2\\] {
   border-bottom-color: var(--border) !important;
 }
 
+.site-brand {
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #d08a2d !important;
+}
+
+.site-brand:hover {
+  color: #e3a34f !important;
+}
+
 a.nav-link, nav a {
   color: var(--text-muted) !important;
 }
