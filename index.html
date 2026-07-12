@@ -227,7 +227,9 @@
           grid.appendChild(div);
         });
       } catch(e) {
-        console.warn('Featured works fallback');
+        console.warn('Featured works fallback', e);
+        const grid = document.getElementById('featured-works');
+        if (grid) grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无照片</div>';
       }
 
       // Recent videos
@@ -258,7 +260,9 @@
           grid.appendChild(div);
         });
       } catch(e) {
-        console.warn('Recent videos fallback');
+        console.warn('Recent videos fallback', e);
+        const grid = document.getElementById('recent-videos');
+        if (grid) grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#888888]">暂无视频</div>';
       }
 
       // Recent posts
@@ -278,7 +282,9 @@
           container.appendChild(div);
         });
       } catch(e) {
-        console.warn('Recent posts fallback');
+        console.warn('Recent posts fallback', e);
+        const container = document.getElementById('recent-posts');
+        if (container) container.innerHTML = '<div class="text-[#888888]">暂无文章</div>';
       }
     }
 
